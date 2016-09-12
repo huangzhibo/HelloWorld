@@ -2,20 +2,20 @@
   "ref":"hg19",
   "geneInfo":"refgene.txt",
   "Hbase":{
-    "eps6500":{
-      "dbName":"ESP6500",
-      "queryCondition":"CHR_POS",
+    "ESP6500":{
+      "table":"eps6500",
       "key":"id",
       "indexTable":"eps6500_index_chr_pos",
+      "queryCondition":"CHR_POS",
       "fields":{
         "ESP6500_AF":"af"
       }
     },
     "dbSNP":{
-      "dbName":"dbSNP",
-      "queryCondition":"CHR_POS",
+      "table":"dbSNP",
       "key":"RSID",
       "indexTable":"dbSNP_index_chr_pos",
+      "queryCondition":"CHR_POS",
       "fields":{
         "RS":"RS",
         "dbSNPBuildID":"dbSNPBuildID",
@@ -23,11 +23,11 @@
         "DBSNP_COMMON":"COMMON"
       }
     },
-    "1000Genomes":{
-      "dbName":"G1000",
-      "queryCondition":"CHR_POS",
+    "G1000":{
+      "table":"1000Genomes",
       "key":"id",
       "indexTable":"1000Genomes_index_chr_pos",
+      "queryCondition":"CHR_POS",
       "fields":{
         "G1000_AF":"AF",
         "G1000_ASN_AF":"ASN_AF",
@@ -36,21 +36,21 @@
         "G1000_AMR_AF":"AMR_AF"
       }
     },
-    "exac":{
-      "dbName":"EXAC",
-      "queryCondition":"CHR_POS",
+    "EXAC":{
+      "table":"exac",
       "key":"id",
       "indexTable":"exac_index_chr_pos",
+      "queryCondition":"CHR_POS",
       "fields":{
         "EXAC_AC":"ac",
         "EXAC_AF":"af"
       }
     },
-    "gwasCatalog":{
-      "dbName":"GWAS",
-      "queryCondition":"CHR_POS_END",
+    "GWAS":{
+      "table":"gwasCatalog",
       "key":"id",
       "indexTable":"gwasCatalog_index_chrom_chromStar_chromEnd",
+      "queryCondition":"CHR_POS_END",
       "fields":{
         "GWAS_trait":"trait",
         "GWAS_title":"title",
@@ -62,11 +62,11 @@
         "GWAS_riskAllel":"riskAllel"
       }
     },
-    "omim_genemap":{
-      "dbName":"OMIM",
-      "queryCondition":"GENE",
+    "OMIM":{
+      "table":"omim_genemap",
       "key":"mim_id",
       "indexTable":"omim_genemap_index_gene_symbol",
+      "queryCondition":"GENE",
       "fields":{
         "OMIM_gene_symbol":"gene_symbol",
         "OMIM_gene_status":"gene_status",
@@ -76,8 +76,8 @@
         "OMIM_ID":"mim_id"
       }
     },
-    "clinvar_variant_summary":{
-      "dbName":"CLINVAR",
+    "CLINVAR":{
+      "table":"clinvar_variant_summary",
       "queryCondition":"CHR_POS_END",
       "key":"id",
       "indexTable":"clinvar_variant_summary_index_chr_start_stop",
@@ -93,8 +93,8 @@
     }
   },
   "Sql":{
-    "table1":{
-      "dbName":"dbName1",
+    "dbName1":{
+      "table":"table1",
       "queryCondition":"CHR_POS_END",
       "key":"id",
       "indexTable":"clinvar_variant_summary_index_chr_start_stop",
