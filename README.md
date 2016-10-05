@@ -1,14 +1,12 @@
 # HelloWorld
-
-hello world!
-
-- huazhibihahjfznbvdhf<br>
-  --- huazhibihahjfznbvdhf
+该项目用于学习计算机各种技术
 
 --------------------------------------------------------------------------------
 
-## Test
-
-### head
-
-iiiii
+## 可能包含的内容
+1. 算法与数据结构
+  - Java实现练习
+  - C实现练习
+2. 设计模式
+  - Java实现练习
+3. 练习项目
