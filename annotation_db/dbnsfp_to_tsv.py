@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 """
 ---------------------------------------------------------------------------------------
-dbNSFP_to_tsv: transfer dbNSFP.txt format to spec tsv for Hbase.
+Note:    transfer dbNSFP.txt format to spec tsv for Hbase.
+dbNSFP:  ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.2a.zip
+Usage:   dbnsfp_to_tsv.py ./dbNSFP3.2a
 ------------------------------------------------------------------------------------------
 """
 
