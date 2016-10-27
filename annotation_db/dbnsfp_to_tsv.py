@@ -14,6 +14,7 @@ dbdsfp_dir = sys.argv[1]
 chrs = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
         "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "M", "X", "Y"]
 header = []
+line_id = 0
 
 with open("dbNSFP.tsv", "w") as out_handle, \
         open("dbNSFP_index_hg19_chr_pos_alt.tsv", "w") as hg19_index_handle, \
@@ -23,10 +24,9 @@ with open("dbNSFP.tsv", "w") as out_handle, \
         infile = os.path.join(dbdsfp_dir, infile_name)
 
         with open(infile) as in_handle:
-            n = 0
             for line in in_handle:
                 if line.startswith("#"):
-                    if len(header) == 0 and n == 0:
+                    if len(header) == 0 and line_id == 0:
                         header = line.split("\t")
                         header[8] = "hg19_pos_1_based"
                         header.pop(9)
@@ -34,17 +34,17 @@ with open("dbNSFP.tsv", "w") as out_handle, \
                         header = header[1:]
                         header[1] = "id"
                     continue
-                n += 1
+                line_id += 1
                 fields = line.split("\t")
                 hg19_index_handle.write("chr{chr}-{pos}-{alt}\t{id}\n".format(
-                    chr=fields[7], pos=fields[8], alt=fields[3], id=n))
+                    chr=fields[7], pos=fields[8], alt=fields[3], id=line_id))
                 hg38_index_handle.write("chr{chr}-{pos}-{alt}\t{id}\n".format(
-                    chr=fields[0], pos=fields[1], alt=fields[3], id=n))
+                    chr=fields[0], pos=fields[1], alt=fields[3], id=line_id))
 
                 fields.pop(9)
                 fields.pop(10)
 
-                out_handle.write("{0}\t{1}".format(n, "\t".join(fields[2:])))
+                out_handle.write("{0}\t{1}".format(line_id, "\t".join(fields[2:])))
 
-with open("dbNSFP_header.tsv", "w") as header:
-    header.write("\t".join(header))
+with open("dbNSFP_header.tsv", "w") as header_out:
+    header_out.write("\t".join(header))
