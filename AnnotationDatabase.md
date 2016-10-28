@@ -70,10 +70,10 @@
  1. **HGNC**
   - **Description**
  		- standardised nomenclature to human genes
-  		- `http://www.genenames.org/help/statistics-downloads`
-  		- `http://www.genenames.org/cgi-bin/statistics#help`
+  		- [Contents](http://www.genenames.org/help/statistics-downloads)
+  		- [download page](http://www.genenames.org/cgi-bin/statistics#help)
   - **Download**:
-  		- ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/hgnc_complete_set.txt
+  		- `ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/hgnc_complete_set.txt`
 
 ---
 ### 遗传病及表型相关数据库：
