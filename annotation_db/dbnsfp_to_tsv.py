@@ -10,6 +10,9 @@ Usage:   dbnsfp_to_tsv.py ./dbNSFP3.2a
 import os
 import sys
 
+if len(sys.argv) != 2:
+    print "Usage:{} <dbdsfp_dir>".format(sys.argv[0])
+
 dbdsfp_dir = sys.argv[1]
 chrs = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
         "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "M", "X", "Y"]
