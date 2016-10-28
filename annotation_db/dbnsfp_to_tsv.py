@@ -26,13 +26,13 @@ with open("dbNSFP.tsv", "w") as out_handle, \
         with open(infile) as in_handle:
             for line in in_handle:
                 if line.startswith("#"):
-                    if len(header) == 0 and line_id == 0:
+                    if line_id == 0:
                         header = line.split("\t")
                         header[8] = "hg19_pos_1_based"
-                        header.pop(9)
                         header.pop(10)
-                        header = header[1:]
+                        header.pop(9)
                         header[1] = "id"
+                        header = header[1:]
                     continue
                 line_id += 1
                 fields = line.split("\t")
@@ -41,8 +41,8 @@ with open("dbNSFP.tsv", "w") as out_handle, \
                 hg38_index_handle.write("chr{chr}-{pos}-{alt}\t{id}\n".format(
                     chr=fields[0], pos=fields[1], alt=fields[3], id=line_id))
 
-                fields.pop(9)
                 fields.pop(10)
+                fields.pop(9)
 
                 out_handle.write("{0}\t{1}".format(line_id, "\t".join(fields[2:])))
 
