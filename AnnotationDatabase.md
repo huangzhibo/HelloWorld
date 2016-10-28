@@ -120,6 +120,10 @@
 	- Download
 		- **hg19 & hg38**
 		`ftp://dbnsfp:dbnsfp@dbnsfp.softgenetics.com/dbNSFPv3.2a.zip`
+	- Hbase Import Table
+		- `dbNSFP`
+		- `dbNSFP_index_hg19_chr_pos_alt`
+		- `dbNSFP_index_hg38_chr_pos_alt`
 
 ---		
 ## 附录
