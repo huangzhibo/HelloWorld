@@ -61,6 +61,8 @@
    	 `ftp://ftp.broadinstitute.org/pub/ExAC_release/current/ExAC.r0.3.1.sites.vep.vcf.gz`
    	 
 4. **pvfd**
+	- Description
+		- `...`	
 
 ---
 ### 突变位点数据库
@@ -80,7 +82,7 @@
  		- standardised nomenclature to human genes
   		- [Contents](http://www.genenames.org/help/statistics-downloads)
   		- [download page](http://www.genenames.org/cgi-bin/statistics#help)
-  - **Download**:
+  - **Download**
   		- `ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/hgnc_complete_set.txt`
 
 ---
@@ -96,9 +98,9 @@
 	- Description
 		- 全基因组关联分析数据库，变异及疾病信息
 	- Download
-		- **hg19**:
+		- **hg19**
 			`http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/gwasCatalog.txt.gz`
-		- **hg38**:
+		- **hg38**
 		`http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/gwasCatalog.txt.gz`
 
 3. **CLINVAR**
