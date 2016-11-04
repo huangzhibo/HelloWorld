@@ -31,18 +31,25 @@
 ### 突变频率数据库
 1. **ESP6500**
   - Description
-   	 - http://exac.broadinstitute.org
+   	 - http://evs.gs.washington.edu/EVS/
   - Download
-   	 - ftp://ftp.broadinstitute.org/pub/ExAC_release/current/*
+  	 - **hg19**
+  	 `http://www.openbioinformatics.org/annovar/download/hg19_esp6500siv2_all.txt.gz`
+   	 - **hg38**
+   	 `http://www.openbioinformatics.org/annovar/download/hg38_esp6500siv2_all.txt.gz`
+   	 - **hg19 & hg38**
+   	 `http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.txt.tar.gz`
+   	 `OR`
+   	 `http://evs.gs.washington.edu/evs_bulk_data/ESP6500SI-V2-SSA137.GRCh38-liftover.snps_indels.vcf.tar.gz`
 
 2. **G1000**
   - Description
  	 - [ucscbrowser tgpPhase3 describe](http://ucscbrowser.genap.ca/cgi-bin/hgTables?db=hg19&hgta_group=varRep&hgta_track=tgpPhase3&hgta_table=tgpPhase3&hgta_doSchema=describe+table+schema)
   	 - **Paper**: [A global reference for human genetic variation](http://www.nature.com/nature/journal/v526/n7571/full/nature15393.html)
   - Download
-    	- hg19:
+    	- GRCh37:
 	    `ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/release/20130502/ALL.wgs.phase3_shapeit2_mvncall_integrated_v5b.20130502.sites.vcf.gz`
-    	- hg38:   
+    	- GRCh38:   
     	使用[CrossMap](https://github.com/huangzhibo/CrossMap)进行坐标转换
 1. **EXAC**
   - Description
@@ -51,6 +58,7 @@
    	 - [6 Population Catalogs Compared with the ExAC 61,486 Exomes](http://blog.goldenhelix.com/grudy/6-population-catalogs-compared-with-the-exac-61486-exomes/?_cldee=emhpYm85MEAxMjYuY29t)
   - Download  
    	 `ftp://ftp.broadinstitute.org/pub/ExAC_release/`
+   	 `ftp://ftp.broadinstitute.org/pub/ExAC_release/current/ExAC.r0.3.1.sites.vep.vcf.gz`
    	 
 4. **pvfd**
 
@@ -60,10 +68,10 @@
    - **Description**
    		- `...`	
    - **Download**
-   		- hg19: 
-	http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/snp147.txt.gz
-		- hg38:  
-	http://hgdownload.cse.ucsc.edu/goldenPath/hg38/database/snp147.txt.gz
+   		- **GRCh37**
+	`ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b147_GRCh37p13/VCF/All_20160601.vcf.gz`
+		- **GRCh38**
+	`ftp://ftp.ncbi.nih.gov/snp/organisms/human_9606_b147_GRCh38p2/VCF/All_20160527.vcf.gz`
 	
 ---
 ### 基因信息数据库
@@ -80,8 +88,9 @@
 1. **OMIM**
 	- Description
 		- 在线人类孟德尔遗传数据库，关于人类基因和遗传紊乱的数据库  
+		- [简介](https://www.douban.com/note/544090098/)
 	- Download
-		- `absence`	
+		- `ftp://ftp.ncbi.nih.gov/repository/OMIM/`
 
 2. **gwasCatalog**
 	- Description
@@ -103,7 +112,9 @@
 4. **HGMD**
 	- Description
 		- `人类基因突变数据库,提供有关人类遗传疾病突变的综合性数据`
-	- Download
+		- [HGMD 人类基因突变数据库专业版](http://blog.sciencenet.cn/home.php?mod=space&uid=668293&do=blog&id=627301)
+	- Download  
+		`http://www.hgmd.cf.ac.uk/docs/register.html`
 5. **CGD**
 	- Description
 		- `Clinical Genomic Database`
@@ -124,6 +135,11 @@
 		- `dbNSFP`
 		- `dbNSFP_index_hg19_chr_pos_alt`
 		- `dbNSFP_index_hg38_chr_pos_alt`
+
+---
+## Hbase数据库导入
+1. 导入的数据应对alt进行
+
 
 ---		
 ## 附录
