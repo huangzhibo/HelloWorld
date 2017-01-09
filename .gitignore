@@ -1,0 +1,10 @@
+
+*.aux
+
+*.log
+
+GaeaPipelineDoc/GaeaPipeline说明文档.out
+
+GaeaPipelineDoc/GaeaPipeline说明文档.synctex.gz
+
+GaeaPipelineDoc/GaeaPipeline说明文档.toc

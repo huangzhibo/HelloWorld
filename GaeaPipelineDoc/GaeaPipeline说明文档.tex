@@ -125,7 +125,7 @@ transform canvas={xshift=0.7mm,yshift=-0.7mm}}]
 \item \textbf{依赖独立性}\\
 原则上应不依赖于其他步骤的目录结构和执行结果，单个步骤可独立运行。
 \item \textbf{参数独立性}\\
- 在user.config中有一个以APP名命名的参数列表，除通用参数外不应调用其他APP的参数。
+ 在user.cfg中有一个以APP名命名的参数列表，除通用参数外不应调用其他APP的参数。
 \item \textbf{模块化}\\
  一个APP就是一个模块，即一个Python脚本，添加新的APP不需要改动流程。
 \item \textbf{可扩展}
@@ -150,8 +150,8 @@ transform canvas={xshift=0.7mm,yshift=-0.7mm}}]
 (5.5,5.2) node(tag2T)  [text width=9em] {InputOutput文件};
 \path (-5.5,3) node(head1)  [head,fill=blue!50,text width=9em] {Input};
 \path (-5.5,-1.3) node(bg-input)  [bg,text width=9em] {};
-\path (-5.5,0.5) node(sample) [io] {sampleList}
-(-5.5,-1.2) node(config) [io] {user.config};
+\path (-5.5,0.5) node(sample) [io] {sample.list}
+(-5.5,-1.2) node(config) [io] {user.cfg};
 %(-5.5,-2.9) node(config) [io] {APP.config};
 
 \path (0.5,3) node(head2)  [head] {Main Module};
@@ -214,7 +214,7 @@ jobSubmit.py是根据state.json信息提交任务的主程序，对每个样本�
 \section{自定义APP模块}
 \label{sec:5}
 \subsection{简述}
-GaeaPipeline的一个APP模块就是一个按约定书写的python脚本，将写好的APP放到{\kaishu \hyperref[envset]{\$GAEA\_HOME}}/workflow目录下或在user.conf中指定存放APP的路径即可使用。使用时只需在user.conf中设置``analysis\_flow''即可{\kaishu \hyperref[fig:flow]{(如图)}}。
+GaeaPipeline的一个APP模块就是一个按约定书写的python脚本，将写好的APP放到{\kaishu \hyperref[envset]{\$GAEA\_HOME}}/workflow目录下或在user.cfg中指定存放APP的路径即可使用。使用时只需在user.cfg中设置``analysis\_flow''即可{\kaishu \hyperref[fig:flow]{(如图)}}。
 
 \subsection{书写约定}
 \subsubsection{App的输入输出}
@@ -229,15 +229,15 @@ GaeaPipeline的一个APP模块就是一个按约定书写的python脚本，将�
 \item \textbf{必要引用和继承}\\
 \lstinputlisting[language=Python]{source/import.py}
 \item \textbf{INIT属性}\\
-INIT是定义默认参数的属性，其值将被存放到self中，会被user.conf参数覆盖，用户要在user.conf文件中设置的参数，需在INIT中设置一个默认值或空值，一些不常更改的参数在此设置也比较方便，如单机APP在此设置INIT.APP.mem(内存资源)等。
+INIT是定义默认参数的属性，其值将被存放到self中，会被user.cfg参数覆盖，用户要在user.cfg文件中设置的参数，需在INIT中设置一个默认值或空值，一些不常更改的参数在此设置也比较方便，如单机APP在此设置INIT.APP.mem(内存资源)等。
 
 \item \textbf{参数调用}\\
-user.conf，INIT默认参数和以及继承自Workflow的信息，均会以字典的形式存储到self对象中，APP可对该对象中的数值进行修改，但除非必要不要在此修改其他APP的参数。程序完成后，会在workdir/scripts/state目录下生成一个state.json文件\footnote{提交任务后也会生成results.json文件，该文件主要信息是state.json的一个子集，但若提交了单机任务，此处会保存jobId信息}，保存了所有self对象中的信息。
+user.cfg，INIT默认参数和以及继承自Workflow的信息，均会以字典的形式存储到self对象中，APP可对该对象中的数值进行修改，但除非必要不要在此修改其他APP的参数。程序完成后，会在workdir/scripts/state目录下生成一个state.json文件\footnote{提交任务后也会生成results.json文件，该文件主要信息是state.json的一个子集，但若提交了单机任务，此处会保存jobId信息}，保存了所有self对象中的信息。
 
 \item \textbf{impl类}\\
 impl是一个传入的类，包含了一些开发APP的常用方法。
 \begin{itemize}
-\item impl.expath()是扩展程序路径的方法，如果传入的程序路径不是绝对路径，则会根据名称在相应目录中查找并返回绝对路径。该方法有两个参数，第一个参数 固定为self.Path.prgDir\footnote{由user.conf设置的存放APP所用程序的目录，多个路径由":"分开，按顺序查找。}，第二个参数为程序名，程序名一般存储形式为self.APP.prgParamName。
+\item impl.expath()是扩展程序路径的方法，如果传入的程序路径不是绝对路径，则会根据名称在相应目录中查找并返回绝对路径。该方法有两个参数，第一个参数 固定为self.Path.prgDir\footnote{由user.cfg设置的存放APP所用程序的目录，多个路径由":"分开，按顺序查找。}，第二个参数为程序名，程序名一般存储形式为self.APP.prgParamName。
 \item impl.mkdir() 是创建目录的方法，可有多个参数，返回值为所创建目录的绝对路径。原则上一个APP不能依赖其他APP创建的路径，所以要使用该方法，而不使用os.path.join().
 \item impl.write\_shell()  该方法用于创建脚本。
 \end{itemize}
@@ -291,27 +291,25 @@ impl是一个传入的类，包含了一些开发APP的常用方法。
 %DAG
 \newpage
 \section{参数配置}
-\subsection{用户参数配置文件}
-用户参数配置文件（user.conf）支持cfg和json两种格式。由于cfg文件更易于注释和阅读，推荐使用这种格式，若用json格式则该文件必须有``.json''后缀。程序\${GAEA\_HOME}/bin/transconf.py用于转换user.conf格式。
-\begin{itemize}
-\item 
+\subsection{用户参数配置文件格式}
+用户参数配置文件（user.cfg）使用cfg格式（json格式不再使用）。
 cfg文件一种是基于INI文件的配置文件，用``\#''号作为注释标记（不能用分号``;''），用中括号标记小节（section），可进行小节的嵌套，区分key值大小写，且支持多种数据类型，详见{\kaishu \href{http://configobj.readthedocs.org/en/latest/configobj.html#the-config-file-format}{格式说明}}。示例如下
 \lstinputlisting[language=bash]{source/example.cfg}
-\item 
-JSON文件是一种轻量级的数据交换格式，数据由逗号分隔，花括号保存对象,方括号保存数组。以上cfg格式的数据转换为JSON格式如下：
-\lstinputlisting[language=bash]{source/example.json}
-\end{itemize}
+
 \subsection{extend配置文件}
-extend配置文件中提供了扩展user.conf通用参数hadoop和ref的信息，不需要用户提供，该文件目的在于简化用户配置。user.conf有较高的优先级，如果用户在user.conf提供了完整的路径，则会覆盖extend中的信息，{\kaishu \hyperref[C]{见附录2}}。
+extend配置文件\footnote{该文件位于\$GAEA\_HOME/config/目录下, 如深圳集群: /ifs4/ISDC\_BD/GaeaProject/software/GaeaPipeline/config/extend.cfg}中提供了扩展user.cfg与具体应用无关的通用参数hadoop和ref的完整信息，目的在于简化用户配置，用户不需要再指定详细的集群参数等。简化后用户只需如下指定所使用集群：
+\lstinputlisting[language=bash]{source/extend_hadoop.cfg}
+
+user.cfg有较高的优先级，用户也可以在user.cfg的hadoop小节下指定完整的信息，这样则会覆盖extend中的设置{\kaishu \hyperref[C]{{\footnotesize 见附录2}}}。
 
 %\newpage
 \subsection{主要参数项说明}
-用户需要提供的参数配置，主要有以下几个要素：
+用户需要提供的参数配置\footnote{用户配置文件相关example位于\$GAEA\_HOME/config/目录下}，主要有以下几个要素：
 \begin{itemize}
 \item \textbf{analysis\_flow}\\
 设置分析步骤和依赖关系，详见{\kaishu \hyperref[subs5.3]{下一小节}}。
 \item \textbf{file}\\
-需要经常更换，或多个APP通用的文件（如bed文件），需在此设置。另外，此参数项下的参数可被其它APP参数以一定的格式引用（需在APP模块中处理），见{\kaishu \hyperref[B]{附录1}}中genotype等APP的参数。
+需要经常更换，或多个APP通用的文件（如bed文件），需在此设置。另外，此参数项下的参数可被其它APP参数以一定的格式引用，见{\kaishu \hyperref[B]{附录1}}中genotype等APP的参数。
 \item \textbf{hadoop}\\
 Hadoop集群信息。该参数在流程的extend配置文件中有相应信息的映射，用户只需简单指定所用集群，文件系统等信息。
 \item \textbf{ref}\\
@@ -364,27 +362,25 @@ init用于从接收sample信息到启动正式分析流程的过度，必要时�
 \end{figure}
 
 
-流程的分析步骤需要在user.config中设置，参数名为``analysis\_flow"。{\kaishu \hyperref[fig:flow]{下图}}是user.conf中``analysis\_flow"参数的设置形式，其中只有第一行的起始步骤没有依赖。另外，对执行步骤只依赖于前一步骤，且属于同一平台的步骤列表可以合并, 步骤间用``|''分割，代表前一步骤的输出是后一步骤的输入。
+流程的分析步骤需要在用户配置文件中设置。{\kaishu \hyperref[fig:flow]{下图}}是配置文件中``analysis\_flow"参数的设置形式，其中只有第一行的起始步骤没有依赖。另外，对执行步骤只依赖于前一步骤，且属于同一平台的步骤列表可以合并, 步骤间用``|''分割，代表前一步骤的输出是后一步骤的输入。
 
 \begin{figure}[H]
  \label{fig:flow}
-%\begin{tikzpicture}[x=2 cm,y=1 cm]
 \begin{tikzpicture}
-\tikzstyle{markbox}=[draw=red,text width=1em, minimum height=1em] 
-%\path (0,0) node(usage)[blankbox,fill=gray!0,text width=14.5cm]{\lstinputlisting{source/workflow.json}};
-\path (-3.9,0) node (left-bound) []{\lstinputlisting{source/workflow.json}};
-\path (-3.9,-4.5) node (left-bound) []{\lstinputlisting{source/simple_workflow.json}};
-\path (-3.9,-8.8) node (left-bound) []{\lstinputlisting{source/workflow.cfg}}
-(-1,-7.2) node(ann) [text width=25em,minimum height=2em] {cfg格式，stageN仅作为key标记，没有实际意义} ;
-\path (-4.2,0.2) node(boxmark1) [markbox] {}
-(-3.45,0.2) node(boxmark2) [markbox] {}
-(-2.7,0.2) node(boxmark3) [markbox] {}
-(2.2,1.9) node(ann) [text width=17em,minimum height=2em] {脚本运行平台} 
-(2.2,1) node(ann2) [text width=17em,minimum height=2em] {运行的步骤（APP）}
-(2.2,-1) node(ann3) [text width=17em,minimum height=3em] {运行步骤所依赖的步骤（APP），依赖步骤的输出将做为运行步骤的输入，单机步骤(S)将依此设置提交任务的依赖关系。};
-\draw[very thick,blue,->] (boxmark1)..controls (-3,1.6) and (-1,1.9) ..(ann);
-\draw[very thick,blue,->] (boxmark2)..controls (-2,1.2) and (-1,1)..(ann2);
-\draw[very thick,blue,->] (boxmark3)..controls (-1.7,0.4) and (-1.3,-0.4) ..(ann3);
+\tikzstyle{markbox}=[draw=red,text width=0.5em, minimum height=1em] 
+\path (-3.9,0) node (left-bound) []{\lstinputlisting{source/workflow.cfg}};
+\path (-4.7,0) node(boxmark0) [markbox,text width=2.1em] {}
+(-3.6,0.) node(boxmark1) [markbox] {}
+(-3.2,0) node(boxmark2) [markbox] {}
+(-2.8,0) node(boxmark3) [markbox] {}
+(3.2,1.9) node(ann0) [text width=25em,minimum height=2em] {analysis\_flow小节下的key，无实际意义，只需确保key不重复} 
+(3.2,1) node(ann1) [text width=25em,minimum height=2em] {脚本运行平台} 
+(3.2,0.5) node(ann2) [text width=25em,minimum height=2em] {运行的步骤（APP）}
+(3.2,-1) node(ann3) [text width=25em,minimum height=3em] {运行步骤所依赖的步骤（APP），依赖步骤的输出将做为运行步骤的输入，单机步骤(S)将依此设置提交任务的依赖关系。};
+\draw[very thick,blue,->] (boxmark0)..controls (-3,1.8) and (-2,2) ..(ann0);
+\draw[very thick,blue,->] (boxmark1)..controls (-3,1.3) and (-2,1) ..(ann1);
+\draw[very thick,blue,->] (boxmark2)..controls (-2.7,0.7) and (-2,0.5) ..(ann2);
+\draw[very thick,blue,->] (boxmark3)..controls (-1.7,0) and (-2,-0.4) ..(ann3);
 %\draw[help lines,dashed] (-5,-5) grid (5,5);
 \end{tikzpicture}
  \caption{analysis\_flow参数}
@@ -418,20 +414,32 @@ command为生成脚本的命令模版，定义在两个三引号内。可用变�
 %\label{envset}
 %\lstinputlisting[language=bash]{source/envset.sh}
 
-\subsection{程序路径}
+\subsection{程序路径及示例}
+
+\begin{itemize}
+\item 程序路径
 \begin{description}
 \item[ 天津] /THL4/home/bgi\_gaea/software/GaeaPipeline/RunGaea
 \item[ 深圳] /ifs4/ISDC\_BD/GaeaProject/software/GaeaPipeline/RunGaea
 \end{description}
-
-
+\item 相关示例在深圳集群 /ifs4/ISDC\_BD/GaeaProject/software/GaeaPipeline/example 目录下
+\end{itemize}
 
 \newpage
 \subsection{生成并运行脚本}
 \label{sec:3}
 \subsubsection{Usage}
-Gaea.py是Gaea流程主程序，将调用其他模块，并根据输入信息生成脚本和其他信息。RunGaea是用shell对Gaea.py进行的包装，可以直接运行，不用配置环境变量\footnote{若使用Gaea.py需要设置环境变量，具体设置见GaeaPipeline/config/envset.sh}。
-\lstinputlisting[language=bash,keywordstyle=\color{black}]{gaea_usage.txt}
+RunGaea是用shell对Gaea.py进行的包装，不用配置环境变量\footnote{若使用Gaea.py需要设置环境变量，具体设置见GaeaPipeline/config/envset.sh}，其功能是生成各分析步骤的shell脚本。其中，WORKDIR, SAMPLELIST和CONFIG为必须指定的参数。help信息如下：
+\lstinputlisting[language=bash,keywordstyle=\color{black}]{source/gaea_usage.txt}
+\subsubsection{投递任务}
+用RunGaea生成脚本后，需要到工作目录的scripts目录下，执行run.sh提交任务。
+\begin{itemize}
+\item ./run.sh\\
+	本地运行hadoop的任务调度程序，如在hadoop的master节点直接执行run.sh。
+\item ./run.sh submit\\
+	将hadoop任务提交到gaea.q队列\footnote{该队列为深圳hadoop35(cluster35)集群专用}，单机任务提交到参数指定的队列。
+\end{itemize}
+
 
 \newpage
 \subsubsection{项目目录结构}
@@ -483,11 +491,6 @@ Gaea.py是Gaea流程主程序，将调用其他模块，并根据输入信息生
 rerun.list文件，是一个包含样本名和运行步骤两列信息的文本文件，单样分析时能区分不同样本的步骤。程序将根据此文件提交任务，若要重跑只需删除不需要跑的步骤，然后重新提交即可。其格式如下：
 \lstinputlisting[]{source/rurun.txt}
 \end{itemize}
-
-\subsection{示例}
-
-可查看深圳集群 /ifs4/ISDC\_BD/GaeaProject/software/GaeaPipeline/example 目录下示例项目
-
 
 
 %\appendix
