@@ -323,6 +323,8 @@ Hadoop集群信息。该参数在流程的extend配置文件中有相应信息�
 init用于从接收sample信息到启动正式分析流程的过度，必要时会对数据进行解压，需在此参数项中设置qualitySystem等。此步骤始终是用户设置的起始步骤的依赖步骤，即事实上的起始步骤。
 \item  self\_defined \\
 用户可使用此参数项自定义APP。这也是一个名为self\_defined的APP模块，通过接收参数生成脚本，但对于较复杂的步骤建议直接实现APP模块。
+\item  应用与参数要对应 \\
+在已有的配置文件中修改时，若改变程序，要注意调整对应的参数。如: {\kaishu\textbf{alignment在使用aln和mem两个子工具时参数是不同的，不能只修改工具名而不改参数}}。
 \end{itemize}
 
 \end{itemize}
@@ -404,10 +406,6 @@ command为生成脚本的命令模版，定义在两个三引号内。可用变�
 \lstinputlisting[language=bash]{source/self.cfg}
 
 
-%%%% 目录结构－－－－－－－－－－－－－－－－
-%\section{目录结构}
-%\subsection{流程目录结构}
-%\lstinputlisting[language=TeX]{source/pipelineDirTree.txt}
 
 \section{使用说明}
 %\subsection{环境变量设置}
@@ -428,6 +426,9 @@ command为生成脚本的命令模版，定义在两个三引号内。可用变�
 \newpage
 \subsection{生成并运行脚本}
 \label{sec:3}
+\subsubsection{准备}
+
+
 \subsubsection{Usage}
 RunGaea是用shell对Gaea.py进行的包装，不用配置环境变量\footnote{若使用Gaea.py需要设置环境变量，具体设置见GaeaPipeline/config/envset.sh}，其功能是生成各分析步骤的shell脚本。其中，WORKDIR, SAMPLELIST和CONFIG为必须指定的参数。help信息如下：
 \lstinputlisting[language=bash,keywordstyle=\color{black}]{source/gaea_usage.txt}
