@@ -12,3 +12,4 @@ GaeaPipelineDoc/GaeaPipeline说明文档.toc
 *.xml
 
 *.iml
+*.pyc
