@@ -164,7 +164,7 @@ class ThCluster(object):
                 print node, field
                 if not field:
                     print "{sinfo} -n {N}|grep {N}".format(sinfo=self.slurm_sinfo, N=node)
-		elif field[4] == 'alloc':
+                elif field[4] == 'alloc':
                     unalloc_node_list.remove(node)
         print "Alloc node completed!"
         self.alloc_node_done = True
@@ -438,7 +438,7 @@ def stop_hadoop(args):
         cluster = ThCluster(state)
         for jobid in cluster.alloc_node_jobid:
             subprocess.call("yhcancel {}".format(jobid), shell=True)
-        # cluster.stop_hadoop()
+            # cluster.stop_hadoop()
 
 
 def main():
