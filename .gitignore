@@ -3,10 +3,9 @@
 
 *.log
 
-GaeaPipelineDoc/GaeaPipeline说明文档.out
-
-GaeaPipelineDoc/GaeaPipeline说明文档.synctex.gz
-
-GaeaPipelineDoc/GaeaPipeline说明文档.toc
-
-annotation_db/.idea/
+*.xml
+*.iml
+*.pyc
+*.toc
+*.synctex.gz
+*.out
