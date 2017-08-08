@@ -55,7 +55,7 @@ class FastqInfo(object):
 
     def add_fqinfo(self, fqinfo):
         self.max_raw_read_len = fqinfo[0] if fqinfo[0] > self.max_raw_read_len else self.max_raw_read_len
-        self.max_clean_read_len += fqinfo[1] if fqinfo[1] > self.max_clean_read_len else self.max_clean_read_len
+        self.max_clean_read_len = fqinfo[1] if fqinfo[1] > self.max_clean_read_len else self.max_clean_read_len
         self.max_quality_value += fqinfo[24] if fqinfo[24] > self.max_quality_value else self.max_quality_value
 
         self.raw_base_num += fqinfo[2]
@@ -237,58 +237,58 @@ class LaneReport(object):
         total_filter_read_num = self.total_raw_read_num - self.total_clean_read_num
         fq1_clean_base = self.read1_info.raw_base_num - self.read1_info.clean_base_num
 
-        line[0] = "{:<70}\t{:<20}\t{:<20}".format('Item', 'raw reads(fq1)', 'clean reads(fq1)')
-        line[1] = "{:<70}\t{:<20}\t{:<20}".format('Read length',
+        line[0] = "{:<65}\t{:<20}\t{:<20}".format('Item', 'raw reads(fq1)', 'clean reads(fq1)')
+        line[1] = "{:<65}\t{:<20}\t{:<20}".format('Read length (max)',
                                                   self.read1_info.max_raw_read_len, self.read1_info.max_clean_read_len)
-        line[2] = "{:<70}\t".format('Total number of reads')
-        line[3] = "{:<70}\t".format('Number of filtered reads (%)')
-        line[4] = "{:<70}\t".format('\nTotal number of bases')
+        line[2] = "{:<65}\t".format('Total number of reads')
+        line[3] = "{:<65}\t".format('Number of filtered reads (%)')
+        line[4] = "{:<65}\t".format('\nTotal number of bases')
         s = '{} ({:.2f}%)'.format(fq1_clean_base, 100.0 * fq1_clean_base / self.read1_info.raw_base_num)
-        line[5] = "{:<70}\t{:<20}\t{:<20}\t".format('Number of filtered bases (%)', s, '-')
-        line[6] = "{:<70}\t{:<20}\t{:<20}\t".format('\nReads related to Adapter and Trimmed (%)', '-', '-')
+        line[5] = "{:<65}\t{:<20}\t{:<20}\t".format('Number of filtered bases (%)', s, '-')
+        line[6] = "{:<65}\t{:<20}\t{:<20}\t".format('\nReads related to Adapter and Trimmed (%)', '-', '-')
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_base_A, 100.0 * self.read1_info.raw_base_A / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_base_A, 100.0 * self.read1_info.clean_base_A / self.read1_info.clean_base_num)
-        line[7] = "{:<70}\t{:<20}\t{:<20}\t".format('\nNumber of base A (%)', raw_s, clean_s)
+        line[7] = "{:<65}\t{:<20}\t{:<20}\t".format('\nNumber of base A (%)', raw_s, clean_s)
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_base_C, 100.0 * self.read1_info.raw_base_C / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_base_C, 100.0 * self.read1_info.clean_base_C / self.read1_info.clean_base_num)
-        line[8] = "{:<70}\t{:<20}\t{:<20}\t".format('Number of base C (%)', raw_s, clean_s)
+        line[8] = "{:<65}\t{:<20}\t{:<20}\t".format('Number of base C (%)', raw_s, clean_s)
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_base_G, 100.0 * self.read1_info.raw_base_G / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_base_G, 100.0 * self.read1_info.clean_base_G / self.read1_info.clean_base_num)
-        line[9] = "{:<70}\t{:<20}\t{:<20}\t".format('Number of base G (%)', raw_s, clean_s)
+        line[9] = "{:<65}\t{:<20}\t{:<20}\t".format('Number of base G (%)', raw_s, clean_s)
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_base_T, 100.0 * self.read1_info.raw_base_T / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_base_T, 100.0 * self.read1_info.clean_base_T / self.read1_info.clean_base_num)
-        line[10] = "{:<70}\t{:<20}\t{:<20}\t".format('Number of base T (%)', raw_s, clean_s)
+        line[10] = "{:<65}\t{:<20}\t{:<20}\t".format('Number of base T (%)', raw_s, clean_s)
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_base_N, 100.0 * self.read1_info.raw_base_N / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_base_N, 100.0 * self.read1_info.clean_base_N / self.read1_info.clean_base_num)
-        line[11] = "{:<70}\t{:<20}\t{:<20}\t".format('Number of base N (%)', raw_s, clean_s)
+        line[11] = "{:<65}\t{:<20}\t{:<20}\t".format('Number of base N (%)', raw_s, clean_s)
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_q20, 100.0 * self.read1_info.raw_q20 / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_q20, 100.0 * self.read1_info.clean_q20 / self.read1_info.clean_base_num)
-        line[12] = "{:<70}\t{:<20}\t{:<20}\t".format(
+        line[12] = "{:<65}\t{:<20}\t{:<20}\t".format(
             '\nNumber of base calls with quality value of 20 or higher (Q20+) (%)', raw_s, clean_s)
         raw_s = '{} ({:.2f}%)'.format(
             self.read1_info.raw_q30, 100.0 * self.read1_info.raw_q30 / self.read1_info.raw_base_num)
         clean_s = '{} ({:.2f}%)'.format(
             self.read1_info.clean_q30, 100.0 * self.read1_info.clean_q30 / self.read1_info.clean_base_num)
-        line[13] = "{:<70}\t{:<20}\t{:<20}\t".format(
+        line[13] = "{:<65}\t{:<20}\t{:<20}\t".format(
             'Number of base calls with quality value of 30 or higher (Q30+) (%)', raw_s, clean_s)
 
         if self.read2_info is not None:
             line[0] += "\t{:<20}\t{:<20}".format('raw reads(fq2)', 'clean reads(fq2)')
             line[1] += "\t{:<20}\t{:<20}".format(self.read2_info.max_raw_read_len, self.read2_info.max_raw_read_len)
-            line[2] += "{0:<20}\t{1:<20}\t{0:<20}\t{1:<20}".format(self.total_raw_read_num / 2,
-                                                                   self.total_clean_read_num / 2)
+            line[2] += "{0:<20}\t{1:<20}\t{0:<20}\t{1:<20}".format(self.total_raw_read_num,
+                                                                   self.total_clean_read_num)
             s = '{} ({:.2f}%)'.format(total_filter_read_num, 100.0 * total_filter_read_num / self.total_raw_read_num)
             line[3] += "{0:<20}\t{1:<20}\t{0:<20}\t{1:<20}".format(s, '-')
             line[4] += "{0:<20}\t{1:<20}\t{2:<20}\t{3:<20}".format(
@@ -378,6 +378,7 @@ class Report(object):
     def print_quality_report(self):
         for lane_id in self.reports:
             prefix = self.reports[lane_id]['lane_name']
+            print prefix
             quality_file = os.path.join(self.outdir, prefix + '.SEQUENCING_QUALITY.txt')
             report = self.reports[lane_id]['report']
             # report.print_quality_report(quality_file)
