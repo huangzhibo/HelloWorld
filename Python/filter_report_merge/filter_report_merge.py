@@ -115,6 +115,7 @@ class FastqInfo(object):
         for pos, qual in enumerate(raw_qual):
             self.q20q30[pos][0] += qual[0]
             self.q20q30[pos][1] += qual[1]
+
             i = 2
             while i < len(qual):
                 self.qual[pos][i - 2] += qual[i]
@@ -222,7 +223,7 @@ class LaneReport(object):
         while not read_info[i].startswith('#'):
             fq2_raw_qual.append(map(int, read_info[i].split()))
             i += 1
-        self.read2_info.add_raw_qual(fq2_clean_qual)
+        self.read2_info.add_raw_qual(fq2_raw_qual)
 
         # Fq2 Clean_Base_quality_value_distribution_by_read_position
         i += 1
@@ -231,7 +232,7 @@ class LaneReport(object):
             i += 1
         self.read2_info.add_clean_qual(fq2_clean_qual)
 
-    def print_quality_report(self):
+    def print_basic_stat(self, report_prefix):
         # setw = len(str(self.total_raw_read_num)) + 10
         line = [''] * 14
         total_filter_read_num = self.total_raw_read_num - self.total_clean_read_num
@@ -342,8 +343,258 @@ class LaneReport(object):
                 100.0 * total_filter_read_num / self.total_raw_read_num, '-')
             line[4] += "{0:<20}\t{1:<20}".format(self.read1_info.raw_base_num, self.read1_info.clean_base_num)
 
-        for l in line:
-            print l
+        with open(report_prefix+'.txt', 'w') as f:
+            for l in line:
+                f.write(l)
+                f.write("\n")
+
+    def print_filter_stat(self, report_prefix):
+        if self.read2_info is not None:
+            lines = ["{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Item', 'Total', 'Percentage', 'Counts(fq1)', 'Percentage', 'Counts(fq1)', 'Percentage')]
+            filter_num = self.total_raw_read_num - self.total_clean_read_num
+            fq1_filter_num = (self.total_raw_read_num - self.total_clean_read_num) / 2
+            if filter_num == 0:
+                filter_num = 1
+                fq1_filter_num = 1
+                lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                    'Total filtered reads', 0, '{:.2%}'.format(0), 0, '{:.2%}'.format(0), 0, '{:.2%}'.format(0)))
+            else:
+                lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                    'Total filtered reads', filter_num, '{:.2%}'.format(100), fq1_filter_num,
+                    '{:.2%}'.format(100), fq1_filter_num, '{:.2%}'.format(100), ))
+            p0 = '{:.2%}'.format(self.total_adapter_num * 1.0 / filter_num)
+            p1 = '{:.2%}'.format(self.read1_info.adapter_num * 1.0 / fq1_filter_num)
+            p2 = '{:.2%}'.format(self.read2_info.adapter_num * 1.0 / fq1_filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Reads with adapter', self.total_adapter_num, p0, self.read1_info.adapter_num, p1,
+                self.read2_info.adapter_num, p2))
+            p0 = '{:.2%}'.format(self.total_low_qual_num * 1.0 / filter_num)
+            p1 = '{:.2%}'.format(self.read1_info.low_qual_num * 1.0 / fq1_filter_num)
+            p2 = '{:.2%}'.format(self.read2_info.low_qual_num * 1.0 / fq1_filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Reads with low quality', self.total_low_qual_num, p0, self.read1_info.low_qual_num, p1,
+                self.read2_info.low_qual_num, p2))
+            p0 = '{:.2%}'.format(self.total_low_mean_num * 1.0 / filter_num)
+            p1 = '{:.2%}'.format(self.read1_info.low_mean_num * 1.0 / fq1_filter_num)
+            p2 = '{:.2%}'.format(self.read2_info.low_mean_num * 1.0 / fq1_filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Reads with low mean quality', self.total_low_mean_num, p0, self.read1_info.low_mean_num, p1,
+                self.read2_info.low_mean_num, p2))
+            # lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            #     'Reads with duplications', 0, 0, 0, 0, 0, 0))
+            p0 = '{:.2%}'.format(self.total_n_exceed_num * 1.0 / filter_num)
+            p1 = '{:.2%}'.format(self.read1_info.n_exceed_num * 1.0 / fq1_filter_num)
+            p2 = '{:.2%}'.format(self.read2_info.n_exceed_num * 1.0 / fq1_filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Read with n rate exceed', self.total_n_exceed_num, p0, self.read1_info.n_exceed_num, p1,
+                self.read2_info.n_exceed_num, p2))
+            p0 = '{:.2%}'.format(self.total_small_insert_num * 1.0 / filter_num)
+            p1 = '{:.2%}'.format(self.read1_info.small_insert_num * 1.0 / fq1_filter_num)
+            p2 = '{:.2%}'.format(self.read2_info.small_insert_num * 1.0 / fq1_filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Read with small insert size', self.total_small_insert_num, p0, self.read1_info.small_insert_num, p1,
+                self.read2_info.small_insert_num, p2))
+            p0 = '{:.2%}'.format(self.total_polyA_num * 1.0 / filter_num)
+            p1 = '{:.2%}'.format(self.read1_info.polyA_num * 1.0 / fq1_filter_num)
+            p2 = '{:.2%}'.format(self.read2_info.polyA_num * 1.0 / fq1_filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                'Reads with PolyA', self.total_polyA_num, p0, self.read1_info.polyA_num, p1,
+                self.read2_info.polyA_num, p2))
+        else:
+            lines = ["{:<65}\t{:<20}\t{:<20}".format(
+                'Item', 'Counts(fq1)', 'Percentage')]
+            filter_num = self.total_raw_read_num - self.total_clean_read_num
+            if filter_num == 0:
+                filter_num = 1
+                lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                    'Total filtered reads', 0, '{:.2%}'.format(0)))
+            else:
+                lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                    'Total filtered reads', filter_num, '{:.2%}'.format(100)))
+            p0 = '{:.2%}'.format(self.total_adapter_num * 1.0 / filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                'Reads with adapter', self.total_adapter_num, p0))
+            p0 = '{:.2%}'.format(self.total_low_qual_num * 1.0 / filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                'Reads with low quality', self.total_low_qual_num, p0))
+            p0 = '{:.2%}'.format(self.total_low_mean_num * 1.0 / filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                'Reads with low mean quality', self.total_low_mean_num, p0))
+            # lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            #     'Reads with duplications', 0, 0, 0, 0, 0, 0))
+            p0 = '{:.2%}'.format(self.total_n_exceed_num * 1.0 / filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                'Read with n rate exceed', self.total_n_exceed_num, p0))
+            p0 = '{:.2%}'.format(self.total_small_insert_num * 1.0 / filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                'Read with small insert size', self.total_small_insert_num, p0))
+            p0 = '{:.2%}'.format(self.total_polyA_num * 1.0 / filter_num)
+            lines.append("{:<65}\t{:<20}\t{:<20}".format('Reads with PolyA', self.total_polyA_num, p0))
+
+        with open(report_prefix+'.txt', 'w') as f:
+            for l in lines:
+                f.write(l)
+                f.write("\n")
+
+    def print_base_dist(self, report_prefix):
+        header = "{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            'Pos', 'A', 'C', 'G', 'T', 'N', 'Clean A', 'Clean C', 'Clean G', 'Clean T', 'Clean N')
+        i = 0
+        r = self.read1_info
+        lines = [header]
+        while i < r.max_raw_read_len:
+            n = (r.base[i][0] + r.base[i][1] + r.base[i][2] + r.base[i][3] + r.base[i][4])*1.0
+            l = '{:<20}'.format(i+1)
+            for num in r.base[i]:
+                p = '{:.2%}'.format(num/n)
+                l += '\t{:<20}'.format(p)
+
+            for num in r.clean_base[i]:
+                p = '{:.2%}'.format(num/n)
+                l += '\t{:<20}'.format(p)
+            i += 1
+            lines.append(l)
+        with open(report_prefix+'_1.txt', 'w') as f:
+            for l in lines:
+                f.write(l)
+                f.write("\n")
+
+        if self.read2_info is not None:
+            i = 0
+            r = self.read1_info
+            lines = [header]
+            while i < r.max_raw_read_len:
+                n = (r.base[i][0] + r.base[i][1] + r.base[i][2] + r.base[i][3] + r.base[i][4]) * 1.0
+                l = '{:<20}'.format(i + 1)
+                for num in r.base[i]:
+                    p = '{:.2%}'.format(num / n)
+                    l += '\t{:<20}'.format(p)
+
+                for num in r.clean_base[i]:
+                    p = '{:.2%}'.format(num / n)
+                    l += '\t{:<20}'.format(p)
+                i += 1
+                lines.append(l)
+
+        with open(report_prefix+'_2.txt', 'w') as f:
+            for l in lines:
+                f.write(l)
+                f.write("\n")
+
+    def print_base_qual(self, report_prefix):
+        i = 0
+        h = ["{:<20}".format('Pos')]
+        while i < self.read1_info.max_quality_value:
+            h.append("\tQ{:<20}".format(i))
+            i += 1
+        # h.append('Mean')
+        # h.append('Median')
+        # h.append('Lower quartile')
+        # h.append('Upper quartile')
+        # h.append('10thpercentile')
+        # h.append('90thpercentile')
+
+        header = "\t".join(h)
+        i = 0
+        r = self.read1_info
+        lines = [header]
+        while i < r.max_raw_read_len:
+            l = '{:<20}'.format(i + 1)
+            for q in r.qual[i]:
+                l += '\t{:<20}'.format(q)
+            i += 1
+            lines.append(l)
+
+        lines.append("Clean Quality Value Distribute")
+        lines.append(header)
+        i = 0
+        while i < r.max_raw_read_len:
+            l = '{:<20}'.format(i + 1)
+            for q in r.clean_qual[i]:
+                l += '\t{:<20}'.format(q)
+            i += 1
+            lines.append(l)
+
+        with open(report_prefix+'_1.txt', 'w') as f:
+            for l in lines:
+                f.write(l)
+                f.write("\n")
+
+        if self.read2_info is not None:
+            header = "\t".join(h)
+            i = 0
+            r = self.read2_info
+            lines = [header]
+            while i < r.max_raw_read_len:
+                l = '{:<20}'.format(i + 1)
+                for q in r.qual[i]:
+                    l += '\t{:<20}'.format(q)
+
+                i += 1
+                lines.append(l)
+
+            lines.append("Clean Quality Value Distribute")
+            lines.append(header)
+            i = 0
+            while i < r.max_raw_read_len:
+                l = '{:<20}'.format(i + 1)
+                for q in r.clean_qual[i]:
+                    l += '\t{:<20}'.format(q)
+                i += 1
+                lines.append(l)
+
+            with open(report_prefix + '_2.txt', 'w') as f:
+                for l in lines:
+                    f.write(l)
+                    f.write("\n")
+
+    def print_q20q30(self, report_prefix):
+        h = ["Position in reads", "Percentage of Q20+ bases",
+             "Percentage of Q30+ bases", "Percentage of Clean Q20+", "Percentage of Clean Q30+"]
+        header = "\t".join(h)
+        i = 0
+        r = self.read1_info
+        lines = [header]
+        while i < r.max_raw_read_len:
+            l = '{:<20}'.format(i + 1)
+            p20 = '{:.2%}'.format(r.q20q30[i][0] / r.raw_base_num)
+            p30 = '{:.2%}'.format(r.q20q30[i][1] / r.raw_base_num)
+            l += '{:<20}'.format(p20)
+            l += '{:<20}'.format(p30)
+            p20 = '{:.2%}'.format(r.clean_q20q30[i][0] / r.clean_base_num)
+            p30 = '{:.2%}'.format(r.clean_q20q30[i][1] / r.clean_base_num)
+            l += '{:<20}'.format(p20)
+            l += '{:<20}'.format(p30)
+            i += 1
+            lines.append(l)
+
+        with open(report_prefix+'_1.txt', 'w') as f:
+            for l in lines:
+                f.write(l)
+                f.write("\n")
+
+        if self.read2_info is not None:
+            i = 0
+            r = self.read2_info
+            lines = [header]
+            while i < r.max_raw_read_len:
+                l = '{:<20}'.format(i + 1)
+                p20 = '{:.2%}'.format(r.q20q30[i][0]*1.0 / r.raw_base_num)
+                p30 = '{:.2%}'.format(r.q20q30[i][1]*1.0 / r.raw_base_num)
+                l += '{:<20}'.format(p20)
+                l += '{:<20}'.format(p30)
+                p20 = '{:.2%}'.format(r.clean_q20q30[i][0]*1.0 / r.clean_base_num)
+                p30 = '{:.2%}'.format(r.clean_q20q30[i][1]*1.0 / r.clean_base_num)
+                l += '{:<20}'.format(p20)
+                l += '{:<20}'.format(p30)
+                i += 1
+                lines.append(l)
+
+            with open(report_prefix + '_2.txt', 'w') as f:
+                for l in lines:
+                    f.write(l)
+                    f.write("\n")
 
 
 class Report(object):
@@ -377,12 +628,22 @@ class Report(object):
 
     def print_quality_report(self):
         for lane_id in self.reports:
-            prefix = self.reports[lane_id]['lane_name']
-            print prefix
-            quality_file = os.path.join(self.outdir, prefix + '.SEQUENCING_QUALITY.txt')
+            prefix = self.reports[lane_id]['lane_name'] + '_'
+            if len(self.reports) == 1:
+                prefix = ''
+            # quality_file = os.path.join(self.outdir, prefix + '.SEQUENCING_QUALITY.txt')
+            f_basic_stat = os.path.join(self.outdir, prefix + 'Basic_Statistics_of_Sequencing_Quality')
+            f_filter_stat = os.path.join(self.outdir, prefix + 'Statistics_of_Filtered_Reads')
+            f_base_quality = os.path.join(self.outdir, prefix + 'Base_quality_value_distribution_by_read_position')
+            f_base_dist = os.path.join(self.outdir, prefix + 'Base_distributions_by_read_position')
+            f_q20q30 = os.path.join(self.outdir, prefix + 'Distribution_of_Q20_Q30_bases_by_read_position')
             report = self.reports[lane_id]['report']
-            # report.print_quality_report(quality_file)
-            report.print_quality_report()
+            report.print_basic_stat(f_basic_stat)
+            # report.print_quality_report()
+            report.print_filter_stat(f_filter_stat)
+            report.print_base_dist(f_base_dist)
+            report.print_base_qual(f_base_quality)
+            report.print_q20q30(f_q20q30)
 
 
 def main():
@@ -395,23 +656,20 @@ def main():
 
     parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument("-i", "--input", dest="input", help='input dir[requested] .')
-    parser.add_argument("-o", "--outdir", dest="outdir", default='./', help='outdir [requested] .')
+    parser.add_argument("-o", "--outdir", dest="outdir", default='./', help='outdir [./] .')
 
     if len(sys.argv) == 1:
         parser.print_help()
         exit(0)
     args = parser.parse_args()
 
-    prefix = 'out'
-    quality_file = args.outdir + "/" + prefix + "SEQUENCING_QUALITY" + ".txt"
+    if not os.path.exists(args.outdir):
+        os.makedirs(args.outdir)
 
     report = Report(args.outdir)
     part_list = glob.glob(args.input + '/part*')
     for part in part_list:
         report.add(part)
-
-        # report_tmp = FastqReport(args.input)
-        # report.add(report_tmp)
 
     report.print_quality_report()
 
