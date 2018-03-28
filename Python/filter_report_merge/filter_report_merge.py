@@ -8,10 +8,17 @@ from argparse import RawDescriptionHelpFormatter, ArgumentParser
 
 __version__ = '1.0.0'
 __date__ = '2017-06-28'
-__updated__ = '2017-06-28'
+__updated__ = '2018-03-28'
 
 
 def add(x, y): return x + y
+
+
+def write_report(filepath, li):
+    with open(filepath, 'w') as f:
+        for l in li:
+            f.write(l)
+            f.write("\n")
 
 
 class FastqInfo(object):
@@ -56,7 +63,7 @@ class FastqInfo(object):
     def add_fqinfo(self, fqinfo):
         self.max_raw_read_len = fqinfo[0] if fqinfo[0] > self.max_raw_read_len else self.max_raw_read_len
         self.max_clean_read_len = fqinfo[1] if fqinfo[1] > self.max_clean_read_len else self.max_clean_read_len
-        self.max_quality_value += fqinfo[24] if fqinfo[24] > self.max_quality_value else self.max_quality_value
+        self.max_quality_value = fqinfo[24] if fqinfo[24] > self.max_quality_value else self.max_quality_value
 
         self.raw_base_num += fqinfo[2]
         self.clean_base_num += fqinfo[3]
@@ -343,10 +350,7 @@ class LaneReport(object):
                 100.0 * total_filter_read_num / self.total_raw_read_num, '-')
             line[4] += "{0:<20}\t{1:<20}".format(self.read1_info.raw_base_num, self.read1_info.clean_base_num)
 
-        with open(report_prefix+'.txt', 'w') as f:
-            for l in line:
-                f.write(l)
-                f.write("\n")
+        write_report(report_prefix+'.txt', line)
 
     def print_filter_stat(self, report_prefix):
         if self.read2_info is not None:
@@ -361,8 +365,8 @@ class LaneReport(object):
                     'Total filtered reads', 0, '{:.2%}'.format(0), 0, '{:.2%}'.format(0), 0, '{:.2%}'.format(0)))
             else:
                 lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
-                    'Total filtered reads', filter_num, '{:.2%}'.format(100), fq1_filter_num,
-                    '{:.2%}'.format(100), fq1_filter_num, '{:.2%}'.format(100), ))
+                    'Total filtered reads', filter_num, '{:.2%}'.format(1), fq1_filter_num,
+                    '{:.2%}'.format(1), fq1_filter_num, '{:.2%}'.format(1), ))
             p0 = '{:.2%}'.format(self.total_adapter_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.adapter_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.adapter_num * 1.0 / fq1_filter_num)
@@ -411,7 +415,7 @@ class LaneReport(object):
                     'Total filtered reads', 0, '{:.2%}'.format(0)))
             else:
                 lines.append("{:<65}\t{:<20}\t{:<20}".format(
-                    'Total filtered reads', filter_num, '{:.2%}'.format(100)))
+                    'Total filtered reads', filter_num, '{:.2%}'.format(1)))
             p0 = '{:.2%}'.format(self.total_adapter_num * 1.0 / filter_num)
             lines.append("{:<65}\t{:<20}\t{:<20}".format(
                 'Reads with adapter', self.total_adapter_num, p0))
@@ -432,10 +436,7 @@ class LaneReport(object):
             p0 = '{:.2%}'.format(self.total_polyA_num * 1.0 / filter_num)
             lines.append("{:<65}\t{:<20}\t{:<20}".format('Reads with PolyA', self.total_polyA_num, p0))
 
-        with open(report_prefix+'.txt', 'w') as f:
-            for l in lines:
-                f.write(l)
-                f.write("\n")
+        write_report(report_prefix + '.txt', lines)
 
     def print_base_dist(self, report_prefix):
         header = "{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
@@ -455,14 +456,12 @@ class LaneReport(object):
                 l += '\t{:<20}'.format(p)
             i += 1
             lines.append(l)
-        with open(report_prefix+'_1.txt', 'w') as f:
-            for l in lines:
-                f.write(l)
-                f.write("\n")
+
+        write_report(report_prefix + '_1.txt', lines)
 
         if self.read2_info is not None:
             i = 0
-            r = self.read1_info
+            r = self.read2_info
             lines = [header]
             while i < r.max_raw_read_len:
                 n = (r.base[i][0] + r.base[i][1] + r.base[i][2] + r.base[i][3] + r.base[i][4]) * 1.0
@@ -477,16 +476,15 @@ class LaneReport(object):
                 i += 1
                 lines.append(l)
 
-        with open(report_prefix+'_2.txt', 'w') as f:
-            for l in lines:
-                f.write(l)
-                f.write("\n")
+            write_report(report_prefix + '_2.txt', lines)
 
     def print_base_qual(self, report_prefix):
         i = 0
         h = ["{:<20}".format('Pos')]
+        print self.read1_info.max_quality_value
+        print "Test"
         while i < self.read1_info.max_quality_value:
-            h.append("\tQ{:<20}".format(i))
+            h.append("Q{:<20}".format(i))
             i += 1
         # h.append('Mean')
         # h.append('Median')
@@ -499,10 +497,13 @@ class LaneReport(object):
         i = 0
         r = self.read1_info
         lines = [header]
+        print header
         while i < r.max_raw_read_len:
             l = '{:<20}'.format(i + 1)
-            for q in r.qual[i]:
-                l += '\t{:<20}'.format(q)
+            j = 0
+            while j < r.max_quality_value:
+                l += '\t{:<20}'.format(r.qual[i][j])
+                j += 1
             i += 1
             lines.append(l)
 
@@ -511,15 +512,14 @@ class LaneReport(object):
         i = 0
         while i < r.max_raw_read_len:
             l = '{:<20}'.format(i + 1)
-            for q in r.clean_qual[i]:
-                l += '\t{:<20}'.format(q)
+            j = 0
+            while j < r.max_quality_value:
+                l += '\t{:<20}'.format(r.clean_qual[i][j])
+                j += 1
             i += 1
             lines.append(l)
 
-        with open(report_prefix+'_1.txt', 'w') as f:
-            for l in lines:
-                f.write(l)
-                f.write("\n")
+        write_report(report_prefix + '_1.txt', lines)
 
         if self.read2_info is not None:
             header = "\t".join(h)
@@ -528,8 +528,10 @@ class LaneReport(object):
             lines = [header]
             while i < r.max_raw_read_len:
                 l = '{:<20}'.format(i + 1)
-                for q in r.qual[i]:
-                    l += '\t{:<20}'.format(q)
+                j = 0
+                while j < r.max_quality_value:
+                    l += '\t{:<20}'.format(r.qual[i][j])
+                    j += 1
 
                 i += 1
                 lines.append(l)
@@ -539,15 +541,14 @@ class LaneReport(object):
             i = 0
             while i < r.max_raw_read_len:
                 l = '{:<20}'.format(i + 1)
-                for q in r.clean_qual[i]:
-                    l += '\t{:<20}'.format(q)
+                j = 0
+                while j < r.max_quality_value:
+                    l += '\t{:<20}'.format(r.clean_qual[i][j])
+                    j += 1
                 i += 1
                 lines.append(l)
 
-            with open(report_prefix + '_2.txt', 'w') as f:
-                for l in lines:
-                    f.write(l)
-                    f.write("\n")
+            write_report(report_prefix + '_2.txt', lines)
 
     def print_q20q30(self, report_prefix):
         h = ["Position in reads", "Percentage of Q20+ bases",
@@ -569,10 +570,7 @@ class LaneReport(object):
             i += 1
             lines.append(l)
 
-        with open(report_prefix+'_1.txt', 'w') as f:
-            for l in lines:
-                f.write(l)
-                f.write("\n")
+        write_report(report_prefix + '_1.txt', lines)
 
         if self.read2_info is not None:
             i = 0
@@ -591,10 +589,7 @@ class LaneReport(object):
                 i += 1
                 lines.append(l)
 
-            with open(report_prefix + '_2.txt', 'w') as f:
-                for l in lines:
-                    f.write(l)
-                    f.write("\n")
+            write_report(report_prefix + '_2.txt', lines)
 
 
 class Report(object):
