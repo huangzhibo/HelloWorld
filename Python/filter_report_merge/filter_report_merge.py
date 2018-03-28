@@ -481,8 +481,6 @@ class LaneReport(object):
     def print_base_qual(self, report_prefix):
         i = 0
         h = ["{:<20}".format('Pos')]
-        print self.read1_info.max_quality_value
-        print "Test"
         while i < self.read1_info.max_quality_value:
             h.append("Q{:<20}".format(i))
             i += 1
