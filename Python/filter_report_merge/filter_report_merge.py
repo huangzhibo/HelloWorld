@@ -495,7 +495,6 @@ class LaneReport(object):
         i = 0
         r = self.read1_info
         lines = [header]
-        print header
         while i < r.max_raw_read_len:
             l = '{:<20}'.format(i + 1)
             j = 0
@@ -557,12 +556,14 @@ class LaneReport(object):
         lines = [header]
         while i < r.max_raw_read_len:
             l = '{:<20}'.format(i + 1)
-            p20 = '{:.2%}'.format(r.q20q30[i][0] / r.raw_base_num)
-            p30 = '{:.2%}'.format(r.q20q30[i][1] / r.raw_base_num)
+            pos_base_num = sum(r.qual[i])
+            p20 = '{:.2%}'.format(float(r.q20q30[i][0])/ pos_base_num)
+            p30 = '{:.2%}'.format(float(r.q20q30[i][1]) / pos_base_num)
             l += '{:<20}'.format(p20)
             l += '{:<20}'.format(p30)
-            p20 = '{:.2%}'.format(r.clean_q20q30[i][0] / r.clean_base_num)
-            p30 = '{:.2%}'.format(r.clean_q20q30[i][1] / r.clean_base_num)
+            clean_pos_base_num = sum(r.clean_qual[i])
+            p20 = '{:.2%}'.format(float(r.clean_q20q30[i][0]) / clean_pos_base_num)
+            p30 = '{:.2%}'.format(float(r.clean_q20q30[i][1]) / clean_pos_base_num)
             l += '{:<20}'.format(p20)
             l += '{:<20}'.format(p30)
             i += 1
@@ -576,12 +577,14 @@ class LaneReport(object):
             lines = [header]
             while i < r.max_raw_read_len:
                 l = '{:<20}'.format(i + 1)
-                p20 = '{:.2%}'.format(r.q20q30[i][0]*1.0 / r.raw_base_num)
-                p30 = '{:.2%}'.format(r.q20q30[i][1]*1.0 / r.raw_base_num)
+                pos_base_num = sum(r.qual[i])
+                p20 = '{:.2%}'.format(float(r.q20q30[i][0]) / pos_base_num)
+                p30 = '{:.2%}'.format(float(r.q20q30[i][1]) / pos_base_num)
                 l += '{:<20}'.format(p20)
                 l += '{:<20}'.format(p30)
-                p20 = '{:.2%}'.format(r.clean_q20q30[i][0]*1.0 / r.clean_base_num)
-                p30 = '{:.2%}'.format(r.clean_q20q30[i][1]*1.0 / r.clean_base_num)
+                clean_pos_base_num = sum(r.clean_qual[i])
+                p20 = '{:.2%}'.format(float(r.clean_q20q30[i][0]) / clean_pos_base_num)
+                p30 = '{:.2%}'.format(float(r.clean_q20q30[i][1]) / clean_pos_base_num)
                 l += '{:<20}'.format(p20)
                 l += '{:<20}'.format(p30)
                 i += 1
