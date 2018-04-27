@@ -22,7 +22,11 @@ class realignment(Workflow):
         
         if self.option.multiSample:
             self.realignment.parameter += " --multiSample"
-            
+
+        fs_type = 'file://'
+        if self.hadoop.input_format == 'hdfs':
+            fs_type = ''
+
         #global param
         ParamDict = self.file.copy()
         ParamDict.update({
@@ -67,4 +71,3 @@ class realignment(Workflow):
         #result
         result.script.update(scriptPath) 
         return result
-                                

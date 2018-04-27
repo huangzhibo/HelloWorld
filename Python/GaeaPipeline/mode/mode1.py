@@ -100,7 +100,7 @@ def parse_sample(sampleList):
                     else:
                         sampleInfo[sampleName][dataTag]['adp2'] = 'null'
                 else:
-                    logger.info("%s of line: %d is SE data!" % (sampleName,total_number)) 
+                    logger.info("%s of line: %d is SE data! (No %s)" % (sampleName, total_number, fq2))
                     
                 sampleInfo[sampleName][dataTag]['gender'] = gender
                 sampleInfo[sampleName][dataTag]['family'] = family
@@ -111,6 +111,6 @@ def parse_sample(sampleList):
                 
                 if insert_size:
                     sampleInfo[sampleName][dataTag]['insert_size'] = insert_size
-                    
+
     return sampleInfo
                                         

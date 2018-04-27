@@ -33,6 +33,10 @@ class alignment(Workflow):
         if self.alignment.parameter.rfind('--enable_filter') != -1:
             self.alignment.streamingJar += ',' + self.expath('alignment.streamingJar2')
 
+        fs_type = 'file://'
+        if self.hadoop.input_format == 'hdfs':
+            fs_type = ''
+
         # TODO nofilter
         tmpInputInfo = bundle()
         fastqDir = impl.mkdir(self.option.workdir, 'raw_data', 'fastq')
@@ -57,7 +61,7 @@ class alignment(Workflow):
 
         hadoop_param = '-D mapred.map.tasks=%s ' % str(self.hadoop.mapper_num)
         hadoop_param += '-D mapred.reduce.tasks=%s ' % str(self.alignment.bwaReducerNum)
-        hadoop_param += '-D mapreduce.reduce.cpu.vcores=6 '
+        hadoop_param += '-D mapreduce.reduce.cpu.vcores=5 '
         if self.hadoop.get('queue'):
             hadoop_param += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)
         if self.hadoop.get('ishadoop2'):
@@ -220,27 +224,29 @@ class alignment(Workflow):
             if dependList[0] == 'init':
                 for sampleName in inputInfo:
                     tmpInputInfo[sampleName] = bundle()
-                    sampleInputInfo = inputInfo[sampleName]
-                    for dataTag in sampleInputInfo:
+                    sample_input = inputInfo[sampleName]
+                    for dataTag in sample_input:
                         laneDataDir = os.path.join(fastqDir, sampleName, dataTag)
                         if os.path.exists(laneDataDir):
                             shutil.rmtree(laneDataDir)
                         impl.mkdir(laneDataDir)
-                        tmpInputInfo[sampleName][dataTag] = 'file://' + laneDataDir
-                        fq1 = sampleInputInfo[dataTag]['fq1']
-                        fqname = os.path.basename(fq1)
-                        dstFq = os.path.join(laneDataDir, fqname)
-                        if os.path.exists(dstFq):
-                            os.remove(dstFq)
-                        os.symlink(fq1, dstFq)
+                        fq1 = sample_input[dataTag]['fq1']
+                        fq2 = ''
+                        if self.hadoop.input_format != 'hdfs':
+                            tmpInputInfo[sampleName][dataTag] = 'file://' + laneDataDir
+                            fqname = os.path.basename(fq1)
+                            dstFq1 = os.path.join(laneDataDir, '{}_{}_{}'.format(sampleName, dataTag, fqname))
+                            os.symlink(fq1, dstFq1)
+                            fq1 = dstFq1
 
-                        if not self.sample[sampleName].isSE:
-                            fq2 = sampleInputInfo[dataTag]['fq2']
-                            fqname = os.path.basename(fq2)
-                            dstFq = os.path.join(laneDataDir, fqname)
-                            if os.path.exists(dstFq):
-                                os.remove(dstFq)
-                            os.symlink(fq2, dstFq)
+                            if not self.sample[sampleName].isSE:
+                                fq2 = sample_input[dataTag]['fq2']
+                                fqname = os.path.basename(fq2)
+                                dstFq2 = os.path.join(laneDataDir, '{}_{}_{}'.format(sampleName, dataTag, fqname))
+                                os.symlink(fq2, dstFq2)
+                                fq2 = dstFq2
+                        else:
+                            tmpInputInfo[sampleName][dataTag] = os.path.dirname(sample_input[dataTag]['fq1'])
 
                 inputInfo = tmpInputInfo
 

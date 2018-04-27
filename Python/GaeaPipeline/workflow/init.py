@@ -26,6 +26,7 @@ class init(Workflow):
     INIT.hadoop.input_format = 'file'
     INIT.hadoop.mapper_num = '112'
     INIT.hadoop.reducer_num = '112'
+    INIT.init.multisample_num = '20'
 
     def check_qs(self,sampleInfo):
         for sample_name in sampleInfo:
@@ -212,19 +213,32 @@ class init(Workflow):
                     fs_type = 'file://'
 
                 if self.option.multiSample:
-                    inputDir = os.path.join(self.option.workdir, 'raw_data', 'bams')
-                    result.output[sampleName] = fs_type + inputDir
+                    n = 0
+                    index = 0
 
+                    inputDir = os.path.join(self.option.workdir, 'raw_data', 'bams_' + str(index))
+                    result.output[sampleName + '_' + str(index)] = fs_type + inputDir
                     if os.path.exists(inputDir):
                         shutil.rmtree(inputDir)
                     impl.mkdir(inputDir)
+                    print inputDir
 
-                    for sample_name in sampleInfo.keys():
+                    for sample_name in sampleInfo:
+                        if n == int(self.init.multisample_num):
+                            n = 0
+                            index += 1
+                            inputDir = os.path.join(self.option.workdir, 'raw_data', 'bams_'+str(index))
+                            result.output[sampleName+'_'+str(index)] = fs_type + inputDir
+                            if os.path.exists(inputDir):
+                                shutil.rmtree(inputDir)
+                            impl.mkdir(inputDir)
+                            print inputDir
                         bam = os.path.basename(sampleInfo[sample_name])
                         ln_bam = os.path.join(inputDir, bam)
                         os.symlink(sampleInfo[sample_name], ln_bam)
+                        n += 1
                 else:
-                    for sample_name in sampleInfo.keys():
+                    for sample_name in sampleInfo:
                         result.output[sample_name] = fs_type + sampleInfo[sample_name]
         else:
             if mode != 3 and mode != 4:
@@ -411,7 +425,7 @@ class init(Workflow):
 
                     for sample_name in sampleInfo.keys():
                         bam = os.path.basename(sampleInfo[sample_name])
-                        ln_bam = os.path.join(inputDir,bam)
+                        ln_bam = os.path.join(inputDir, sample_name+"_"+bam)
                         os.symlink(sampleInfo[sample_name], ln_bam)
                 else:
                     for sample_name in sampleInfo.keys():

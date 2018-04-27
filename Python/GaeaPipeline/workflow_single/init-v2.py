@@ -9,7 +9,7 @@ from gaeautils import bundle
 
 
 class init(Workflow):
-    """ init data, init data path """
+    """ streaming: upload to hdfs"""
 
     INIT = bundle(hadoop=bundle(), init=bundle())
     INIT.init.multiUploader = 'multi_uploader.pl'
@@ -49,16 +49,25 @@ class init(Workflow):
         self.init.bgzip = self.expath('init.bgzip', False)
         self.init.samtools = self.expath('init.samtools', False)
 
-        sampleName = self.option.multiSampleName
-        scriptsdir = impl.mkdir(self.gaeaScriptsDir, sampleName)
-        self.analysisList = self.analysisList[1:]
-        hdfs_gz_tmp = os.path.join(self.option.dirHDFS, sampleName, 'data', 'gz_tmp')
-        rawData = os.path.join(self.option.dirHDFS, sampleName, 'fq')
+        mapper = []
+        mapper.append("#!/usr/bin/perl -w")
+        mapper.append("use strict;\n")
+        mapper.append("while(<STDIN>)\n{")
+        mapper.append("\tchomp;\n\tmy @tmp = split(/\\t/);")
+        mapper.append("\tif(!-e $tmp[1])\n\t{")
+        mapper.append("\t\tprint \"$tmp[1] don't exist.\\n\";")
+        mapper.append("\t\texit 1;\n\t}")
+        mapper.append("\tsystem(\"%s jar %s GzUploader -i $tmp[1] -o $tmp[2] -n $tmp[3]\");\n}" % (
+        self.hadoop.bin, self.init.gzUploader))
+
+        # self.analysisList = self.analysisList[1:]
 
         output = bundle()
-        cmd = []
+        DataParam = []
         for sample_name in sampleInfo.keys():
-            DataParam = []
+            raw_data = os.path.join(self.option.dirHDFS, sample_name, 'fq')
+            scriptsdir = impl.mkdir(self.gaeaScriptsDir, sample_name)
+            hdfs_gz_tmp = os.path.join(self.option.dirHDFS, sample_name, 'data', 'gz_tmp')
             sample = sampleInfo[sample_name]
             output[sample_name] = bundle()
             for dataTag in sample.keys():
@@ -67,37 +76,22 @@ class init(Workflow):
                 filename = '{}_{}_{}'.format(sample_name, dataTag, pathTup[0])
                 DataParam.append({
                     "KEY": sample[dataTag]['fq1'],
-                    "VALUE": rawData,
+                    "VALUE": raw_data,
                     "VALUE2": filename
                 })
-                output[sample_name][dataTag]['fq1'] = os.path.join(rawData, filename)
+                output[sample_name][dataTag]['fq1'] = os.path.join(raw_data, filename)
 
-                if self.init.isSE == False:
+                if not self.init.isSE:
                     pathTup = impl.splitext(sample[dataTag]['fq2'])
                     filename = '{}_{}_{}'.format(sample_name, dataTag, pathTup[0])
                     DataParam.append({
                         "KEY": sample[dataTag]['fq2'],
-                        "VALUE": rawData,
+                        "VALUE": raw_data,
                         "VALUE2": filename
                     })
-                    output[sample_name][dataTag]['fq2'] = os.path.join(rawData, filename)
+                    output[sample_name][dataTag]['fq2'] = os.path.join(raw_data, filename)
 
-        if DataParam:
-            impl.write_file(
-                fileName='data.list',
-                scriptsdir=scriptsdir,
-                commands=["${KEY}\t${VALUE}\t${VALUE2}"],
-                JobParamList=DataParam)
 
-            mapper = []
-            mapper.append("#!/usr/bin/perl -w")
-            mapper.append("use strict;\n")
-            mapper.append("while(<STDIN>)\n{")
-            mapper.append("\tchomp;\n\tmy @tmp = split(/\\t/);")
-            mapper.append("\tif(!-e $tmp[1])\n\t{")
-            mapper.append("\t\tprint \"$tmp[1] don't exist.\\n\";")
-            mapper.append("\t\texit 1;\n\t}")
-            mapper.append("\tsystem(\"%s jar %s GzUploader -i $tmp[1] -o $tmp[2] -n $tmp[3]\");\n}" % (self.hadoop.bin, self.init.gzUploader))
             impl.write_file(
                 fileName='upload_mapper.pl',
                 scriptsdir=scriptsdir,
@@ -112,23 +106,26 @@ class init(Workflow):
             ParamDict = {
                 "PROGRAM": "%s jar %s" % (self.hadoop.bin, self.hadoop.streamingJar),
                 "MAPPER": os.path.join(scriptsdir, 'upload_mapper.pl'),
-                "INPUT": 'file://' + os.path.join(scriptsdir, 'data.list'),
+                "INPUT": 'file://' + os.path.join(self.gaeaScriptsDir, 'data.list'),
                 "OUTPUT": hdfs_gz_tmp,
                 "HADOOPPARAM": hadoop_parameter
             }
-
-            cmd.append('%s ${OUTPUT}' % self.fs_cmd.delete)
-            cmd.append('%s jar %s GzUploader -i %s -l' % (self.hadoop.bin, self.init.gzUploader, os.path.join(scriptsdir, 'data.list')))
 
             # write script
             scriptPath = \
                 impl.write_shell(
                     name='init',
                     scriptsdir=scriptsdir,
-                    commands=cmd,
+                    commands=['${PROGRAM} -i ${INPUT} -l'],
                     paramDict=ParamDict)
-            result.script[sampleName] = scriptPath
 
+            result.script[sample_name] = scriptPath
+
+        impl.write_file(
+            fileName='data.list',
+            scriptsdir=self.gaeaScriptsDir,
+            commands=["${KEY}\t${VALUE}\t${VALUE2}"],
+            JobParamList=DataParam)
         result.output = output
 
         if self.init.qualitySystem == '':

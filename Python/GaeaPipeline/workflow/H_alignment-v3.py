@@ -3,7 +3,6 @@ import os, re
 from gaeautils.bundle import bundle
 from gaeautils.workflow import Workflow
 import shutil
-import math
 
 
 class alignment(Workflow):
@@ -51,18 +50,17 @@ class alignment(Workflow):
             hadoop2_reducer_mem = '20480'
 
         if not self.alignment.bwaReducerNumDivide:
-            self.alignment.bwaReducerNumDivide = 5
+            self.alignment.bwaReducerNumDivide = 3
         elif self.hadoop.is_at_TH:
             self.alignment.bwaReducerNumDivide = 5
 
         if not self.alignment.get('bwaReducerNum'):
-            # self.alignment.bwaReducerNum = int(self.hadoop.reducer_num) / int(self.alignment.bwaReducerNumDivide) - 4
-            self.alignment.bwaReducerNum = int(math.ceil(int(self.hadoop.reducer_num) / 42.0)) * 8 - 1
+            self.alignment.bwaReducerNum = int(self.hadoop.reducer_num) / int(self.alignment.bwaReducerNumDivide) - 4
         if self.alignment.bwaReducerNum < 1:
             self.alignment.bwaReducerNum = 1
 
-        hadoop_param = '-D mapreduce.job.maps=%s ' % str(self.hadoop.mapper_num)
-        hadoop_param += '-D mapreduce.job.reducers=%s ' % str(self.alignment.bwaReducerNum)
+        hadoop_param = '-D mapred.map.tasks=%s ' % str(self.hadoop.mapper_num)
+        hadoop_param += '-D mapred.reduce.tasks=%s ' % str(self.alignment.bwaReducerNum)
         hadoop_param += '-D mapreduce.reduce.cpu.vcores=5 '
         if self.hadoop.get('queue'):
             hadoop_param += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)
@@ -116,13 +114,17 @@ class alignment(Workflow):
             sampleName = self.option.multiSampleName
             scriptsdir = impl.mkdir(self.option.workdir, "scripts", 'gaea', sampleName)
             multi_fq_dir = os.path.join(fastqDir, sampleName)
+            sample_list = {}
+            LineParam = []
             if dependList[0] == 'init':
-                LineParam = []
-                if os.path.exists(multi_fq_dir):
-                    shutil.rmtree(multi_fq_dir)
-                impl.mkdir(multi_fq_dir)
-                sample_list = os.path.join(scriptsdir, "sampleinfo.list")
-                MSL = open(sample_list, 'w')
+                if self.hadoop.input_format != 'hdfs':
+                    if os.path.exists(multi_fq_dir):
+                        shutil.rmtree(multi_fq_dir)
+                    impl.mkdir(multi_fq_dir)
+                else:
+                    multi_fq_dir = os.path.join(self.option.dirHDFS, sampleName, 'fq')
+                sample_list['normal'] = os.path.join(scriptsdir, "sampleinfo.list")
+                MSL = open(sample_list['normal'], 'w')
                 line = ["${ID}\t${RG}\t${FQ1}\t${FQ2}\t${ADP1}\t${ADP2}"]
                 for sample_name in inputInfo:
                     sample_input = inputInfo[sample_name]
@@ -153,35 +155,33 @@ class alignment(Workflow):
                             "ADP2": sample[dataTag].has_key('adp2') and fs_type + sample[dataTag]['adp2'] or 'null'
                         })
 
-                    impl.fileAppend(
-                        fh=MSL,
-                        commands=line,
-                        JobParamList=LineParam)
+                impl.fileAppend(
+                    fh=MSL,
+                    commands=line,
+                    JobParamList=LineParam)
 
             hdfs_outputPath = os.path.join(self.option.dirHDFS, sampleName, 'BWA_output')
-            samplelist = self.results['init']['output'][sampleName]
-            sampleInputInfo = inputInfo[sampleName]
             JobParam = []
 
             if self.ref.gender_mode == "both" and self.option.mode != 5:
                 if self.info.female_counter > 0:
-                    hadoopParam = ' -D mapreduce.job.name="bwa_%s_female" %s' % (subfunc, hadoop_param)
+                    hadoopParam = ' -D mapred.job.name="bwa_%s_female" %s' % (subfunc, hadoop_param)
                     output = os.path.join(hdfs_outputPath, 'female')
                     JobParam.append({
-                        "INPUT": sampleInputInfo.female,
+                        "INPUT": sample_list['female'],
                         "OUTPUT": output,
                         "SUBFUNC": subfunc,
-                        "SAMPLELIST": "%s %s" % (samplelistparam, samplelist.female),
+                        "SAMPLELIST": "%s %s" % (samplelistparam, sample_list['female']),
                         "INDEX": self.ref.female.ref,
                         "HADOOPPARAM": hadoopParam,
                         "OPTIONPARAM": self.alignment.parameter
                     })
 
                 if self.info.male_counter > 0:
-                    hadoopParam = ' -D mapreduce.job.name="bwa_%s_male" %s' % (subfunc, hadoop_param)
+                    hadoopParam = ' -D mapred.job.name="bwa_%s_male" %s' % (subfunc, hadoop_param)
                     output = os.path.join(hdfs_outputPath, 'male')
                     JobParam.append({
-                        "INPUT": sampleInputInfo.male,
+                        "INPUT": sample_list['male'],
                         "OUTPUT": output,
                         "SUBFUNC": subfunc,
                         "SAMPLELIST": "%s %s" % (samplelistparam, samplelist.male),
@@ -190,15 +190,14 @@ class alignment(Workflow):
                         "OPTIONPARAM": self.alignment.parameter
                     })
             elif self.ref.gender_mode == "normal" or self.option.mode == 5:
-                hadoopParam = ' -D mapreduce.job.name="bwa_%s" %s' % (subfunc, hadoop_param)
+                hadoopParam = ' -D mapred.job.name="bwa_%s" %s' % (subfunc, hadoop_param)
                 output = hdfs_outputPath
-                if self.option.mode == 5 or self.alignment.parameter.rfind('--enable_filter') != -1:
-                    hadoopParam = ' -D multiSampleList=%s %s' % (samplelist.normal, hadoopParam)
+                hadoopParam = ' -D multiSampleList=%s %s' % (sample_list['normal'], hadoopParam)
                 JobParam.append({
-                    "INPUT": sampleInputInfo.normal,
+                    "INPUT": '{}{}'.format(fs_type, multi_fq_dir),
                     "OUTPUT": hdfs_outputPath,
                     "SUBFUNC": subfunc,
-                    "SAMPLELIST": "%s %s" % (samplelistparam, samplelist.normal),
+                    "SAMPLELIST": "%s %s" % (samplelistparam, sample_list['normal']),
                     "INDEX": self.ref.normal.ref,
                     "HADOOPPARAM": hadoopParam,
                     "OPTIONPARAM": self.alignment.parameter
@@ -223,91 +222,5 @@ class alignment(Workflow):
 
             result.output[sampleName] = hdfs_outputPath
             result.script[sampleName] = scriptPath
-        else:
-            if dependList[0] == 'init':
-                for sampleName in inputInfo:
-                    tmpInputInfo[sampleName] = bundle()
-                    sample_input = inputInfo[sampleName]
-                    for dataTag in sample_input:
-                        laneDataDir = os.path.join(fastqDir, sampleName, dataTag)
-                        if os.path.exists(laneDataDir):
-                            shutil.rmtree(laneDataDir)
-                        impl.mkdir(laneDataDir)
-                        fq1 = sample_input[dataTag]['fq1']
-                        fq2 = ''
-                        if self.hadoop.input_format != 'hdfs':
-                            tmpInputInfo[sampleName][dataTag] = 'file://' + laneDataDir
-                            fqname = os.path.basename(fq1)
-                            dstFq1 = os.path.join(laneDataDir, '{}_{}_{}'.format(sampleName, dataTag, fqname))
-                            os.symlink(fq1, dstFq1)
-                            fq1 = dstFq1
-
-                            if not self.sample[sampleName].isSE:
-                                fq2 = sample_input[dataTag]['fq2']
-                                fqname = os.path.basename(fq2)
-                                dstFq2 = os.path.join(laneDataDir, '{}_{}_{}'.format(sampleName, dataTag, fqname))
-                                os.symlink(fq2, dstFq2)
-                                fq2 = dstFq2
-                        else:
-                            tmpInputInfo[sampleName][dataTag] = os.path.dirname(sample_input[dataTag]['fq1'])
-
-                inputInfo = tmpInputInfo
-
-            for sampleName in inputInfo:
-                scriptsdir = os.path.join(self.gaeaScriptsDir, sampleName)
-                hdfs_outputPath = os.path.join(self.option.dirHDFS, sampleName, 'BWA_output')
-                sampleInputInfo = inputInfo[sampleName]
-                JobParam = []
-                RedParam = []
-
-                for dataTag in sampleInputInfo:
-                    hdfs_outDir = os.path.join(hdfs_outputPath, sampleName + "-" + dataTag)
-                    name = "%s-%s" % (sampleName, dataTag)
-
-                    rg = self.sample[sampleName]['rg'][dataTag]
-                    parameter = "%s '%s' %s " % (rg_param_tag, rg, self.alignment.parameter)
-                    gender = self.sample[sampleName].gender
-                    RedParam.append({
-                        "DATATAG": dataTag,
-                        "SUBFUNC": subfunc,
-                        "INDEX": self.ref[gender].ref,
-                        "OPTIONPARAM": parameter
-                    })
-
-                    JobParam.append({
-                        "DATATAG": dataTag,
-                        "INPUT": sampleInputInfo[dataTag],
-                        "OUTDIR": hdfs_outDir,
-                        "HADOOPPARAM": ' -D mapreduce.job.name="bwa_%s_%s" %s' % (subfunc, name, hadoop_param),
-                        "REDUCER": '"sh %s"' % os.path.join(scriptsdir, 'bwa_reducer_%s.sh' % name)
-                    })
-                    tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'filter'+dataTag)
-
-                # write script (multi file)
-                impl.write_file(
-                    fileName='bwa_reducer_%s-${DATATAG}.sh' % sampleName,
-                    scriptsdir=scriptsdir,
-                    commands=["%s ${SUBFUNC} ${INDEX} ${OPTIONPARAM} -" % self.alignment.program],
-                    JobParamList=RedParam)
-
-                cmd = []
-                cmd.append('echo "alignment %s-${DATATAG}"' % sampleName)
-                cmd.append("%s ${OUTDIR}" % fs_cmd.delete)
-                cmd.append(
-                    "${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTDIR} -mapper ${MAPPER} -reducer ${REDUCER}")
-                cmd.append("%s ${OUTDIR}/*-S %s" % (fs_cmd.cp, tmp))
-                cmd.append("%s ${OUTDIR}/*-S" % fs_cmd.delete)
-                # write_shell name: no ext .sh (just one file)
-                scriptPath = \
-                    impl.write_shell(
-                        name='alignment',
-                        scriptsdir=scriptsdir,
-                        commands=cmd,
-                        JobParamList=JobParam,
-                        paramDict=ParamDict)
-
-                result.output[sampleName] = hdfs_outputPath
-                result.script[sampleName] = scriptPath
-
         # return
         return result

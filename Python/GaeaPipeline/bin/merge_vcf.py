@@ -40,14 +40,16 @@ def check_part_vcf(bed_prefix, part_vcf_dir):
     return status
 
 def merge_vcf(bed_prefix, part_vcf_dir, vcf):
-    part_vcfs = ''
-    for p in bed_prefix:
-        tmp_vcf = os.path.join(part_vcf_dir, p+vcf_suffix)
-        part_vcfs += " " + tmp_vcf
+    part_vcf_list = os.path.join(part_vcf_dir, 'part_vcf.list')
+    with open(part_vcf_list, 'w') as wf:
+        for p in bed_prefix:
+            part_vcf = os.path.join(part_vcf_dir, p+vcf_suffix)
+            wf.write(part_vcf)
+            wf.write('\n')
 
-    cmd = '/hwfssz1/BIGDATA_COMPUTING/software/bin/bcftools concat --threads 24 -a -O z {} -o {}'.format(part_vcfs, vcf)
-    #printtime('INFO: {}'.format(cmd))
-    subprocess.call(cmd, shell=True) 
+    cmd = '/hwfssz1/BIGDATA_COMPUTING/software/bin/bcftools concat --threads 24 -O z -f {} -o {}'.format(part_vcf_list, vcf)
+    printtime('INFO: {}'.format(cmd))
+    subprocess.call(cmd, shell=True)
 
 def main():
     program_name = os.path.basename(sys.argv[0])

@@ -118,7 +118,7 @@ class filter(Workflow):
                     if sampleInputInfo[dataTag].has_key('adp1'):
                         adp = " -adapter1 {}{}".format(fs_type,sampleInputInfo[dataTag]['adp1'])
                     if sampleInputInfo[dataTag].has_key('adp2'):
-                        adp = " -adapter2 {}{}".format(fs_type,sampleInputInfo[dataTag]['adp2'])
+                        adp += " -adapter2 {}{}".format(fs_type,sampleInputInfo[dataTag]['adp2'])
                     parameterStr = "%s %s" % (adp,parameter)
                     output[dataTag] = os.path.join(hdfs_outDir,'out_fq')
                     

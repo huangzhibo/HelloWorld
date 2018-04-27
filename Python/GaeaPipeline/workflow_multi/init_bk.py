@@ -48,13 +48,13 @@ class init(Workflow):
         self.init.check_log = self.expath('init.check_log')
         self.init.bgzip = self.expath('init.bgzip', False)
         self.init.samtools = self.expath('init.samtools', False)
-        print self.init.gzUploader
 
         sampleName = self.option.multiSampleName
         scriptsdir = impl.mkdir(self.gaeaScriptsDir, sampleName)
         self.analysisList = self.analysisList[1:]
         hdfs_gz_tmp = os.path.join(self.option.dirHDFS, sampleName, 'data', 'gz_tmp')
-        rawData = os.path.join(self.option.dirHDFS, sampleName, 'fq')
+
+        # result.output[sampleName] = output
 
         DataParam = []
         output = bundle()
@@ -63,31 +63,58 @@ class init(Workflow):
             sample = sampleInfo[sample_name]
             output[sample_name] = bundle()
             for dataTag in sample.keys():
+                rawData = impl.mkdir(self.option.workdir, 'fq', 'raw_data', sample_name)
+                laneData = os.path.join(rawData, dataTag)
+                cmd.append("mkdir -p -m 777 %s" % laneData)
                 output[sample_name][dataTag] = bundle()
                 pathTup = impl.splitext(sample[dataTag]['fq1'])
-                filename = '{}_{}_{}'.format(sample_name, dataTag, pathTup[0])
-                DataParam.append({
-                    "KEY": sample[dataTag]['fq1'],
-                    "VALUE": rawData,
-                    "VALUE2": filename
-                })
-                output[sample_name][dataTag]['fq1'] = os.path.join(rawData, filename)
+                if pathTup and pathTup[1] == '.gz':
+                    DataParam.append({
+                        "KEY": sample[dataTag]['fq1'],
+                        "VALUE": os.path.join(laneData, pathTup[0])
+                    })
+                    output[sample_name][dataTag]['fq1'] = os.path.join(laneData, pathTup[0])
+                else:
+                    output[sample_name][dataTag]['fq1'] = sample[dataTag]['fq1']
 
                 if self.init.isSE == False:
                     pathTup = impl.splitext(sample[dataTag]['fq2'])
-                    filename = '{}_{}_{}'.format(sample_name, dataTag, pathTup[0])
-                    DataParam.append({
-                        "KEY": sample[dataTag]['fq2'],
-                        "VALUE": rawData,
-                        "VALUE2": filename
-                    })
-                    output[sample_name][dataTag]['fq2'] = os.path.join(rawData, filename)
+                    if pathTup and pathTup[1] == '.gz':
+                        DataParam.append({
+                            "KEY": sample[dataTag]['fq2'],
+                            "VALUE": os.path.join(laneData, pathTup[0])
+                        })
+                        output[sample_name][dataTag]['fq2'] = os.path.join(laneData, pathTup[0])
+                    else:
+                        output[sample_name][dataTag]['fq2'] = sample[dataTag]['fq2']
 
+                if sample[dataTag].has_key('adp1'):
+                    pathTup = impl.splitext(sample[dataTag]['adp1'])
+                    if pathTup and pathTup[1] == '.gz':
+                        DataParam.append({
+                            "KEY": sample[dataTag]['adp1'],
+                            "VALUE": os.path.join(laneData, pathTup[0])
+                        })
+                        output[sample_name][dataTag]['adp1'] = os.path.join(laneData, pathTup[0])
+                    else:
+                        output[sample_name][dataTag]['adp1'] = sample[dataTag]['adp1']
+
+                if sample[dataTag].has_key('adp2'):
+                    pathTup = impl.splitext(sample[dataTag]['adp2'])
+                    if pathTup and pathTup[1] == '.gz':
+                        DataParam.append({
+                            "KEY": sample[dataTag]['adp2'],
+                            "VALUE": os.path.join(laneData, pathTup[0])
+                        })
+                        output[sample_name][dataTag]['adp2'] = os.path.join(laneData, pathTup[0])
+                    else:
+                        output[sample_name][dataTag]['adp2'] = sample[dataTag]['adp2']
+                        #                 print DataParam
         if DataParam:
             impl.write_file(
                 fileName='data.list',
                 scriptsdir=scriptsdir,
-                commands=["${KEY}\t${VALUE}\t${VALUE2}"],
+                commands=["${KEY}\t${VALUE}"],
                 JobParamList=DataParam)
 
             mapper = []
@@ -98,13 +125,13 @@ class init(Workflow):
             mapper.append("\tif(!-e $tmp[1])\n\t{")
             mapper.append("\t\tprint \"$tmp[1] don't exist.\\n\";")
             mapper.append("\t\texit 1;\n\t}")
-            mapper.append("\tsystem(\"%s jar %s GzUploader -i $tmp[1] -o $tmp[2] -n $tmp[3]\");\n}" % (self.hadoop.bin, self.init.gzUploader))
+            mapper.append("\tsystem(\"gzip -cd $tmp[1] >$tmp[2]\");\n}")
             impl.write_file(
                 fileName='upload_mapper.pl',
                 scriptsdir=scriptsdir,
                 commands=mapper)
 
-            hadoop_parameter = ' -D mapred.job.name="upload data" '
+            hadoop_parameter = ' -D mapred.job.name="gzip input data" '
             if self.hadoop.get('queue'):
                 hadoop_parameter += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)
             hadoop_parameter += ' -D mapred.map.tasks=%d ' % len(DataParam)
@@ -119,8 +146,7 @@ class init(Workflow):
             }
 
             cmd.append('%s ${OUTPUT}' % self.fs_cmd.delete)
-            # cmd.append('${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTPUT} -mapper "perl ${MAPPER}"')
-            cmd.append('%s jar %s GzUploader -i %s -l' % (self.hadoop.bin, self.init.gzUploader, os.path.join(scriptsdir, 'data.list')))
+            cmd.append('${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTPUT} -mapper "perl ${MAPPER}"')
 
             # write script
             scriptPath = \

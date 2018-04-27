@@ -71,7 +71,7 @@ class bamSort(Workflow):
         else:
             if self.bamSort.get('index_program'):
                 #cmd.append('if [ ! -e ${OUTPUT}.bai ]\nthen')
-                cmd.append('%s index ${OUTPUT}' % self.bamSort.index_program)
+                cmd.append('%s index ${OUTPUT} -t 12' % self.bamSort.index_program)
                 #cmd.append('fi')
         
         JobParamList = []

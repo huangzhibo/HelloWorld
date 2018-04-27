@@ -36,11 +36,11 @@ def result_check(sampleName,state,steptag,size_threshold=10):
     return status
 
 def update_db_state(sample, status_tag, message=None):
-    db_update = "/szhwfs1/ST_HEALTH/GENOME_APP/F16ZQSB1SY2582/personalgenome/lib/genome_api_for_gaea.pl"
+    db_update = "/hwfssz1/ST_HEALTH/WGS/F16ZQSB1SY2582/personalgenome/lib/genome_api_for_gaea.pl"
     message_param = ''
     if message:
         message_param = '-message {}'.format(message)
-    cmd = 'perl {} -sample_no {} -status {} {}'.format(db_update, sample, status_tag, message_param)
+    cmd = 'ssh 192.168.60.11 /hwfssz1/ST_MCHRI/CLINIC/SOFTWARES/bin/perl {} -sample_no {} -status {} {}'.format(db_update, sample, status_tag, message_param)
     printtime('INFO: {}'.format(cmd))
     subprocess.call(cmd, shell=True)
 

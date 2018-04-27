@@ -1,7 +1,5 @@
 from pybedtools import BedTool, Interval
 
-
-
 class BedSplit(object):
     def __init__(self, bed_file):
         self.bed = BedTool(bed_file)
@@ -24,6 +22,8 @@ bed = BedTool('/Users/huangzhibo/workitems/10.testData/testPlatformTJ/bed/test.b
 
 
 bed = BedTool(bed.sort().merge().window_maker(b=bed.fn, w=100))
+
+bed.all_hits()
 
 # x = BedTool().window_maker(genome='hg38', w=1000000)
 bed.saveas('/Users/huangzhibo/workitems/10.testData/testPlatformTJ/bed/test_w100.bed')

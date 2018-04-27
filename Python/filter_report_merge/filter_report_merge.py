@@ -484,6 +484,8 @@ class LaneReport(object):
         while i < self.read1_info.max_quality_value:
             h.append("Q{:<20}".format(i))
             i += 1
+
+        # TODO add this stat
         # h.append('Mean')
         # h.append('Median')
         # h.append('Lower quartile')

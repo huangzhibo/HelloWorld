@@ -9,10 +9,8 @@ class bamSort_M(Workflow):
     """ bamSort_M """
 
     INIT = bundle(bamSort_M=bundle())
-    INIT.bamSort_M.program = "hadoop-BamSort.jar"
-    INIT.bamSort_M.parameter = "-f 2 -i 2 -ref xx"
-    INIT.bamSort_M.picard = "picard.x.1.jar"
-    INIT.bamSort_M.output_format = 'file'
+    INIT.bamSort_M.program = "gaea-20180330.jar"
+    INIT.bamSort_M.parameter = ""
     # INIT.bamSort_M.bamindex = False
     
         
@@ -23,25 +21,25 @@ class bamSort_M(Workflow):
         
         #extend program path
         self.bamSort_M.program = self.expath('bamSort_M.program')
-        self.bamSort_M.picard = self.expath('bamSort_M.picard')
 
         hadoop_parameter = ''
         if self.hadoop.get('queue'):
             hadoop_parameter += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)
-        hadoop_parameter += '-libjars {} '.format(self.bamSort_M.picard)
 
         reducer = self.hadoop.reducer_num
         if self.option.multiSample:
+            self.bamSort_M.parameter = impl.paramCheck(True, self.bamSort_M.parameter, '-m')
             redeuce_per_node = 10
             if self.hadoop.is_at_TH:
                 redeuce_per_node = 5
             if redeuce_per_node > len(self.sample):
                 redeuce_per_node = len(self.sample)
             reducer = int(int(self.hadoop.reducer_num)/redeuce_per_node)
-            
+
+
         #global param
         ParamDict = {
-                "PROGRAM": "%s jar %s %s" % (self.hadoop.bin, self.bamSort_M.program, hadoop_parameter),
+                "PROGRAM": "%s jar %s BamSort %s" % (self.hadoop.bin, self.bamSort_M.program, hadoop_parameter),
                 "REDUCERNUM":reducer
             }
         
@@ -74,11 +72,8 @@ class bamSort_M(Workflow):
         if dependList[0] == "alignment":
             inputTag = '/*'
         cmd = []
-        cmd.append("%s ${HDFSTMP}" % fs_cmd.delete)
-        cmd.append("allparts=")
         cmd.append("%s ${INPUT}%s/part* |awk '{print $%d}' > ${BAMLIST}" % (fs_cmd.ls,inputTag, (not self.hadoop.ishadoop2 and self.hadoop.is_at_TH) and 9 or 8))
-        cmd.append('for i in `cat ${BAMLIST}`;do allparts="${allparts} $i";done')
-        cmd.append("${PROGRAM} %s -o ${OUTDIR} -r ${REDUCERNUM} ${HDFSTMP} ${allparts}" % self.bamSort_M.parameter)
+        cmd.append("${PROGRAM} %s -i ${BAMLIST} -o ${OUTDIR} -R ${REDUCERNUM}" % self.bamSort_M.parameter)
                     
         #write script
         scriptPath = \
@@ -89,5 +84,5 @@ class bamSort_M(Workflow):
                 paramDict=ParamDict)
     
         #result
-        result.script.update(scriptPath)     
+        result.script.update(scriptPath)
         return result

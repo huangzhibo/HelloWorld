@@ -14,6 +14,7 @@ class init(Workflow):
     INIT = bundle(hadoop=bundle(), init=bundle())
     INIT.init.multiUploader = 'multi_uploader.pl'
     INIT.init.gzUploader = "GzUpload.jar"
+    INIT.init.gatk = "/hwfssz1/BIGDATA_COMPUTING/software/source/gatk4/gatk"
     INIT.init.bgzip = 'bgzip'
     INIT.init.perl = 'perl'
     INIT.init.samtools = 'samtools'
@@ -48,14 +49,15 @@ class init(Workflow):
         self.init.check_log = self.expath('init.check_log')
         self.init.bgzip = self.expath('init.bgzip', False)
         self.init.samtools = self.expath('init.samtools', False)
-        print self.init.gzUploader
 
         sampleName = self.option.multiSampleName
         scriptsdir = impl.mkdir(self.gaeaScriptsDir, sampleName)
         self.analysisList = self.analysisList[1:]
         hdfs_gz_tmp = os.path.join(self.option.dirHDFS, sampleName, 'data', 'gz_tmp')
-        rawData = os.path.join(self.option.dirHDFS, sampleName, 'fq')
+        tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'ubam')
+        rawData = impl.mkdir(self.option.workdir, "ubam", sampleName)
 
+        ubam = []
         DataParam = []
         output = bundle()
         cmd = []
@@ -64,30 +66,23 @@ class init(Workflow):
             output[sample_name] = bundle()
             for dataTag in sample.keys():
                 output[sample_name][dataTag] = bundle()
-                pathTup = impl.splitext(sample[dataTag]['fq1'])
-                filename = '{}_{}_{}'.format(sample_name, dataTag, pathTup[0])
-                DataParam.append({
-                    "KEY": sample[dataTag]['fq1'],
-                    "VALUE": rawData,
-                    "VALUE2": filename
-                })
-                output[sample_name][dataTag]['fq1'] = os.path.join(rawData, filename)
+                filename = '{}_{}.bam'.format(sample_name, dataTag)
+                output[sample_name][dataTag]['bam'] = os.path.join(rawData, filename)
+                ubam.append(output[sample_name][dataTag]['bam'])
 
-                if self.init.isSE == False:
-                    pathTup = impl.splitext(sample[dataTag]['fq2'])
-                    filename = '{}_{}_{}'.format(sample_name, dataTag, pathTup[0])
-                    DataParam.append({
-                        "KEY": sample[dataTag]['fq2'],
-                        "VALUE": rawData,
-                        "VALUE2": filename
-                    })
-                    output[sample_name][dataTag]['fq2'] = os.path.join(rawData, filename)
+                DataParam.append({
+                    "KEY1": sample[dataTag]['fq1'],
+                    "KEY2": sample[dataTag]['fq2'],
+                    "KEY3": output[sample_name][dataTag]['bam'],
+                    "KEY4": sample_name,
+                    "KEY5": sample_name + "_" + dataTag
+                })
 
         if DataParam:
             impl.write_file(
                 fileName='data.list',
                 scriptsdir=scriptsdir,
-                commands=["${KEY}\t${VALUE}\t${VALUE2}"],
+                commands=["${KEY1}\t${KEY2}\t${KEY3}\t${KEY4}\t${KEY5}"],
                 JobParamList=DataParam)
 
             mapper = []
@@ -98,7 +93,7 @@ class init(Workflow):
             mapper.append("\tif(!-e $tmp[1])\n\t{")
             mapper.append("\t\tprint \"$tmp[1] don't exist.\\n\";")
             mapper.append("\t\texit 1;\n\t}")
-            mapper.append("\tsystem(\"%s jar %s GzUploader -i $tmp[1] -o $tmp[2] -n $tmp[3]\");\n}" % (self.hadoop.bin, self.init.gzUploader))
+            mapper.append("\tsystem(\"%s FastqToSam -F1 $tmp[1] -F2 $tmp[2] -O $tmp[3] -SM $tmp[4] -RG $tmp[5] --TMP_DIR %s -PL illumina\");\n}" % (self.init.gatk, tmp ))
             impl.write_file(
                 fileName='upload_mapper.pl',
                 scriptsdir=scriptsdir,
@@ -108,6 +103,7 @@ class init(Workflow):
             if self.hadoop.get('queue'):
                 hadoop_parameter += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)
             hadoop_parameter += ' -D mapred.map.tasks=%d ' % len(DataParam)
+            hadoop_parameter += '-D mapreduce.map.memory.mb=10240 '
             hadoop_parameter += ' -D mapred.reduce.tasks=0 '
             hadoop_parameter += ' -inputformat org.apache.hadoop.mapred.lib.NLineInputFormat '
             ParamDict = {
@@ -119,8 +115,10 @@ class init(Workflow):
             }
 
             cmd.append('%s ${OUTPUT}' % self.fs_cmd.delete)
-            # cmd.append('${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTPUT} -mapper "perl ${MAPPER}"')
-            cmd.append('%s jar %s GzUploader -i %s -l' % (self.hadoop.bin, self.init.gzUploader, os.path.join(scriptsdir, 'data.list')))
+            cmd.append('${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTPUT} -mapper "perl ${MAPPER}"')
+
+            # cmd.append('%s jar %s GzUploader -i %s -l' % (
+            # self.hadoop.bin, self.init.gzUploader, os.path.join(scriptsdir, 'data.list')))
 
             # write script
             scriptPath = \

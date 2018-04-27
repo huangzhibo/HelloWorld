@@ -9,35 +9,47 @@ def parse_sample(sampleList):
     sampleInfo = bundle()
     with open(sampleList,'r') as f:
         for line in f:
+            fq1s = []
             line = line.strip()
             field = line.split()
+            rg_LB = field[2]
+            rg_PU = field[3]
             sampleName = field[1]
-            fq_dir = field[-1].strip()
-            fq1s = glob.glob("%s/*1.fq.gz" % fq_dir)
 
-            if len(fq1s) == 0:
+            if field[3].find(',') != -1:
+                fq1s.append(field[3].split(',')[0])
+                rg_LB = field[1]
+                rg_PU = field[2]
+                sampleName = field[0]
+            else:
+                fq_dir = field[-1].strip()
+                fq1s = glob.glob("%s/*1.fq.gz" % fq_dir)
+                if not fq1s:
+                    fq1s = glob.glob("%s/*/*1.fq.gz" % fq_dir)
+
+            if len(fq1s) == 0 or not os.path.exists(fq1s[0]):
                 logger.error("fq1 under %s don't exists." % sampleName)
                 exit(3)
 
             for fq1 in fq1s:
                 total_number += 1
-                fq_dir = os.path.abspath(os.path.dirname(fq1))
-                fq_name = os.path.basename(fq1)
+                if not sampleInfo.has_key(sampleName):
+                    sampleInfo[sampleName] = bundle()
+                    sample_lane_counter = 0
+                else:
+                    sample_lane_counter = len(sampleInfo[sampleName])
+                # fq_name = os.path.basename(fq1)
+                # fq_dir = os.path.abspath(os.path.dirname(fq1))
 
                 # slideID_laneID_barcode
                 # CL100035764_L02_33_1.fq.gz
-                tmp = fq_name.split("_")
-                rg_LB = field[2]
-                rg_ID = "{}_{}_{}_{}".format(sampleName, tmp[0], tmp[1], tmp[2])
-                rg_PU = tmp[0] + "_" + tmp[1] + "_" + tmp[2]
+                # tmp = fq_name.split("_")
+                # rg_PU = tmp[0] + "_" + tmp[1] + "_" + tmp[2]
+
+                rg_ID = "{}_{}".format(sampleName, sample_lane_counter)
                 rg = "@RG\\tID:%s\\tPL:COMPLETE\\tPU:%s\\tLB:%s\\tSM:%s\\tCN:BGI" % (rg_ID, rg_PU, rg_LB, sampleName)
                 fq_lib_name = rg_ID
 
-                if not sampleInfo.has_key(sampleName):
-                        sampleInfo[sampleName] = bundle()
-                        sample_lane_counter = 0
-                else:
-                    sample_lane_counter = len(sampleInfo[sampleName])
 
                 dataTag = 'data'+str(sample_lane_counter)
                 if not sampleInfo[sampleName].has_key(dataTag):
