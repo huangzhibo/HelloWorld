@@ -629,7 +629,6 @@ class Report(object):
             prefix = self.reports[lane_id]['lane_name'] + '_'
             if len(self.reports) == 1:
                 prefix = ''
-            # quality_file = os.path.join(self.outdir, prefix + '.SEQUENCING_QUALITY.txt')
             f_basic_stat = os.path.join(self.outdir, prefix + 'Basic_Statistics_of_Sequencing_Quality')
             f_filter_stat = os.path.join(self.outdir, prefix + 'Statistics_of_Filtered_Reads')
             f_base_quality = os.path.join(self.outdir, prefix + 'Base_quality_value_distribution_by_read_position')
@@ -637,7 +636,6 @@ class Report(object):
             f_q20q30 = os.path.join(self.outdir, prefix + 'Distribution_of_Q20_Q30_bases_by_read_position')
             report = self.reports[lane_id]['report']
             report.print_basic_stat(f_basic_stat)
-            # report.print_quality_report()
             report.print_filter_stat(f_filter_stat)
             report.print_base_dist(f_base_dist)
             report.print_base_qual(f_base_quality)

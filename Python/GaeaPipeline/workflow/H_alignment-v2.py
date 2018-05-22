@@ -11,6 +11,7 @@ class alignment(Workflow):
 
     INIT = bundle(alignment=bundle())
     INIT.alignment.program = "bwa-streaming"
+    INIT.alignment.program_report = "filter_report_merge.py"
     INIT.alignment.bwaSubTool = 'aln'
     INIT.alignment.streamingJar = "Streaming_fq.jar"
     INIT.alignment.streamingJar2 = "SuffixMultipleTextOutputFormat.jar"
@@ -33,6 +34,7 @@ class alignment(Workflow):
         self.alignment.streamingJar = self.expath('alignment.streamingJar')
         if self.alignment.parameter.rfind('--enable_filter') != -1:
             self.alignment.streamingJar += ',' + self.expath('alignment.streamingJar2')
+            self.alignment.program_report = self.expath('alignment.program_report')
 
         fs_type = 'file://'
         if self.hadoop.input_format == 'hdfs':
@@ -66,8 +68,7 @@ class alignment(Workflow):
         hadoop_param += '-D mapreduce.reduce.cpu.vcores=5 '
         if self.hadoop.get('queue'):
             hadoop_param += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)
-        if self.hadoop.get('ishadoop2'):
-            hadoop_param += '-D mapreduce.reduce.memory.mb=%s ' % hadoop2_reducer_mem
+        hadoop_param += '-D mapreduce.reduce.memory.mb=%s ' % hadoop2_reducer_mem
         hadoop_param += "-D stream.num.map.output.key.fields=%s " % self.alignment.fqInputOutputKey
         hadoop_param += "-D num.key.fields.for.partition=%s " % self.alignment.fqInputPartitionKey
         hadoop_param += "-libjars=%s " % self.alignment.streamingJar
@@ -203,7 +204,7 @@ class alignment(Workflow):
                     "HADOOPPARAM": hadoopParam,
                     "OPTIONPARAM": self.alignment.parameter
                 })
-
+            QCDir = impl.mkdir(self.option.workdir, 'QC', sampleName)
             tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'filter')
             cmd = []
             cmd.append("%s ${OUTPUT}" % fs_cmd.delete)
@@ -212,6 +213,7 @@ class alignment(Workflow):
             cmd.append("%s ${OUTPUT}/_*\n" % fs_cmd.delete)
             cmd.append("%s ${OUTPUT}/*-S %s" % (fs_cmd.cp, tmp))
             cmd.append("%s ${OUTPUT}/*-S" % fs_cmd.delete)
+            cmd.append("%s -i ${OUTPUT} -o %s" % (self.alignment.program_report, QCDir))
 
             scriptPath = \
                 impl.write_shell(
@@ -278,10 +280,11 @@ class alignment(Workflow):
                         "DATATAG": dataTag,
                         "INPUT": sampleInputInfo[dataTag],
                         "OUTDIR": hdfs_outDir,
+                        "QCDIR" : impl.mkdir(self.option.workdir, 'QC', sampleName, 'filter'+dataTag),
+                        "QCTMP" : impl.mkdir(self.option.workdir, "temp", sampleName, 'filter'+dataTag),
                         "HADOOPPARAM": ' -D mapreduce.job.name="bwa_%s_%s" %s' % (subfunc, name, hadoop_param),
                         "REDUCER": '"sh %s"' % os.path.join(scriptsdir, 'bwa_reducer_%s.sh' % name)
                     })
-                    tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'filter'+dataTag)
 
                 # write script (multi file)
                 impl.write_file(
@@ -295,8 +298,9 @@ class alignment(Workflow):
                 cmd.append("%s ${OUTDIR}" % fs_cmd.delete)
                 cmd.append(
                     "${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTDIR} -mapper ${MAPPER} -reducer ${REDUCER}")
-                cmd.append("%s ${OUTDIR}/*-S %s" % (fs_cmd.cp, tmp))
+                cmd.append("%s ${OUTDIR}/*-S ${QCTMP}" % fs_cmd.cp)
                 cmd.append("%s ${OUTDIR}/*-S" % fs_cmd.delete)
+                cmd.append("%s -i ${QCTMP} -o ${QCDIR}" % self.alignment.program_report)
                 # write_shell name: no ext .sh (just one file)
                 scriptPath = \
                     impl.write_shell(

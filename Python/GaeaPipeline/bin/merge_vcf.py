@@ -39,15 +39,19 @@ def check_part_vcf(bed_prefix, part_vcf_dir):
             break
     return status
 
-def merge_vcf(bed_prefix, part_vcf_dir, vcf):
+def merge_vcf(bed_prefix, part_vcf_dir, out, gvcf=False):
     part_vcf_list = os.path.join(part_vcf_dir, 'part_vcf.list')
+    suffix = vcf_suffix
+    if gvcf:
+        suffix = gvcf_suffix
+        part_vcf_list = os.path.join(part_vcf_dir, 'part_gvcf.list')
     with open(part_vcf_list, 'w') as wf:
         for p in bed_prefix:
-            part_vcf = os.path.join(part_vcf_dir, p+vcf_suffix)
+            part_vcf = os.path.join(part_vcf_dir, p+suffix)
             wf.write(part_vcf)
             wf.write('\n')
 
-    cmd = '/hwfssz1/BIGDATA_COMPUTING/software/bin/bcftools concat --threads 24 -O z -f {} -o {}'.format(part_vcf_list, vcf)
+    cmd = '/hwfssz1/BIGDATA_COMPUTING/software/bin/bcftools concat --threads 24 -O z -a -f {} -o {}'.format(part_vcf_list, out)
     printtime('INFO: {}'.format(cmd))
     subprocess.call(cmd, shell=True)
 
@@ -61,7 +65,8 @@ def main():
 
     parser = ArgumentParser(description=program_license, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument("-b", "--bedlist", help="sample_name,[default: %(default)s]", required=True)
-    parser.add_argument("-o", "--output", help="output file name,[default: %(default)s]", required=True)
+    parser.add_argument("-o", "--output", help="output file path,[default: %(default)s]", required=True)
+    parser.add_argument("-g", "--gvcf_out", help="gvcf output file path,[default: %(default)s]", )
     parser.add_argument("-p", "--part_vcf_dir", help="part_vcf_dir,[default: %(default)s]", required=True)
 
     if len(sys.argv) == 1:
@@ -94,6 +99,8 @@ def main():
     if status:
         print "part_vcf_dir is good!" 
         merge_vcf(bed_prefix, args.part_vcf_dir, args.output)
+        if args.gvcf_out:
+             merge_vcf(bed_prefix, args.part_vcf_dir, args.gvcf_out, True)
     else:
         print "part_vcf_dir is bad!"
 

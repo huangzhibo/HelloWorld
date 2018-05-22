@@ -5,47 +5,45 @@ from gaeautils.bundle import bundle
 from gaeautils.workflow import Workflow
 
 
-class haplotypeCaller(Workflow):
-    """ haplotypeCaller """
+class gaeaHC(Workflow):
+    """ gaeaHC """
 
-    INIT = bundle(haplotypeCaller=bundle())
-    INIT.haplotypeCaller.program = "GenomeAnalysisTK.jar"
-    INIT.haplotypeCaller.bcftools = "bcftools"
-    INIT.haplotypeCaller.parameter = ""
-    INIT.haplotypeCaller.parameter_g = ""
-    INIT.haplotypeCaller.bed_list = ""
-    INIT.haplotypeCaller.mapper_mem = "30720"
+    INIT = bundle(gaeaHC=bundle())
+    INIT.gaeaHC.program = "GenomeAnalysisTK.jar"
+    INIT.gaeaHC.parameter = ""
+    INIT.gaeaHC.GenotypeGVCFs_param = ""
+    INIT.gaeaHC.bed_list = ""
+    INIT.gaeaHC.mapper_mem = "30720"
 
     def run(self, impl, dependList):
-        impl.log.info("step: haplotypeCaller!")
+        impl.log.info("step: gaeaHC!")
         inputInfo = self.results[dependList[0]].output
         result = bundle(output=bundle(), script=bundle())
     #    bed_dir = impl.mkdir(self.option.workdir, "temp", "bed")
 
         if 'bed_list' in self.file:
-            self.haplotypeCaller.bed_list = self.expath('file.bed_list')
+            self.gaeaHC.bed_list = self.expath('file.bed_list')
 
         # extend program path
-        self.haplotypeCaller.program = self.expath('haplotypeCaller.program')
-        self.haplotypeCaller.bed_list = self.expath('haplotypeCaller.bed_list')
-        self.haplotypeCaller.bcftools = self.expath('haplotypeCaller.bcftools')
+        self.gaeaHC.program = self.expath('gaeaHC.program')
+        self.gaeaHC.bed_list = self.expath('gaeaHC.bed_list')
 
         bed_num = 0
-        with open(self.haplotypeCaller.bed_list, 'r') as bed:
+        with open(self.gaeaHC.bed_list, 'r') as bed:
             bed_num = len(bed.readlines())
         # global param
         MapperParamDict = self.file.copy()
-        hadoop_parameter = ' -D mapred.job.name="haplotypeCaller" '
+        hadoop_parameter = ' -D mapreduce.job.name="gaeaHC" '
         if self.hadoop.get('queue'):
             hadoop_parameter += ' -D mapreduce.job.queuename={} '.format(self.hadoop.queue)
-        hadoop_parameter += ' -D mapred.map.tasks={} '.format(bed_num)
-        hadoop_parameter += ' -D mapred.reduce.tasks=0 '
-        hadoop_parameter += ' -D mapreduce.map.memory.mb=%s ' % self.haplotypeCaller.mapper_mem
+        hadoop_parameter += ' -D mapreduce.job.maps={} '.format(bed_num)
+        hadoop_parameter += ' -D mmapreduce.job.reducers=0 '
+        hadoop_parameter += ' -D mapreduce.map.memory.mb=%s ' % self.gaeaHC.mapper_mem
         hadoop_parameter += ' -D mapreduce.map.cpu.vcores=6 '
         hadoop_parameter += ' -inputformat org.apache.hadoop.mapred.lib.NLineInputFormat '
         ParamDict = {
             "PROGRAM": "%s jar %s" % (self.hadoop.bin, self.hadoop.streamingJar),
-            "INPUT": 'file://' + self.haplotypeCaller.bed_list,
+            "INPUT": 'file://' + self.gaeaHC.bed_list,
             "HADOOPPARAM": hadoop_parameter
         }
 
@@ -57,11 +55,11 @@ class haplotypeCaller(Workflow):
                   "\t\techo $LINE",
                   "\t\tbed=`echo $LINE| awk '{print $2}'`",
                   "\t\tbase=`basename $bed .bed`",
-                  '\t\tjava -Xmx%sm -jar %s -T HaplotypeCaller %s -I ${BAM} -L $bed -R %s -o ${VCF_TMP}/$base.g.vcf.gz' %
-                  (self.haplotypeCaller.mapper_mem, self.haplotypeCaller.program, self.haplotypeCaller.parameter, self.ref.normal.ref),
+                  '\t\tjava -Xmx%sm -jar %s -T gaeaHC %s -I ${BAM} -L $bed -R %s -o ${VCF_TMP}/$base.g.vcf.gz' %
+                  (self.gaeaHC.mapper_mem, self.gaeaHC.program, self.gaeaHC.parameter, self.ref.normal.ref),
                   "\t\tsleep 3",
                   '\t\tjava -Xmx%sm -jar %s -T GenotypeGVCFs --variant ${VCF_TMP}/$base.g.vcf.gz -R %s -o ${VCF_TMP}/$base.hc.vcf.gz %s' %
-                  (self.haplotypeCaller.mapper_mem, self.haplotypeCaller.program, self.ref.normal.ref, self.haplotypeCaller.parameter_g),
+                  (self.gaeaHC.mapper_mem, self.gaeaHC.program, self.ref.normal.ref, self.gaeaHC.GenotypeGVCFs_param),
                   "\telse",
                   '\t\techo "Empty LANE"',
                   "\tfi",
@@ -74,9 +72,7 @@ class haplotypeCaller(Workflow):
             tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'hc')
             os.chmod(tmp, 0777)
             scriptsdir = impl.mkdir(self.gaeaScriptsDir, sampleName)
-            outputPath = impl.mkdir(self.option.workdir, "variation", 'haplotypeCaller', sampleName)
-            result.output[sampleName] = os.path.join(outputPath, "{}.hc.vcf.gz".format(sampleName))
-            gvcf = os.path.join(outputPath, "{}.g.vcf.gz".format(sampleName))
+            result.output[sampleName] = tmp
 
             MapperParamDict.update({"BAM":inputInfo[sampleName], "VCF_TMP":tmp})
             impl.write_file(
@@ -91,28 +87,19 @@ class haplotypeCaller(Workflow):
                     "SCRDIR" : scriptsdir,
                     "MAPPER": os.path.join(scriptsdir, "hc_mapper.sh"),
                     "OUTPUT": result.output[sampleName],
-                    "GVCF": gvcf,
                     "VCF_TMP": tmp,
                     "OUTTEMP": hdfs_tmp
                 })
    
         cmd = ["source %s/bin/activate" % self.GAEA_HOME,
                '%s ${OUTTEMP}' % self.fs_cmd.delete,
-               '${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTTEMP} -mapper "sh ${MAPPER}"',
-               'merge_vcf.py -b %s -p ${VCF_TMP} -o ${OUTPUT}' % self.haplotypeCaller.bed_list]
-    #           'allVcfs=',
-    #           'for i in `ls ${VCF_TMP}/*g.vcf.gz`;do',   
-    #           '\tallVcfs="${allVcfs} $i"\ndone',
-    #           '%s concat -a -O z ${allVcfs} -o ${GVCF} ' % self.haplotypeCaller.bcftools,
-    #           'allVcfs=',
-    #           'for i in `ls ${VCF_TMP}/*hc.vcf.gz`;do',   
-    #           '\tallVcfs="${allVcfs} $i"\ndone',
-    #           '%s concat -a -O z ${allVcfs} -o ${OUTPUT} ' % self.haplotypeCaller.bcftools]
+               '${PROGRAM} ${HADOOPPARAM} -input ${INPUT} -output ${OUTTEMP} -mapper "sh ${MAPPER}"']
+               # 'merge_vcf.py -b %s -p ${VCF_TMP} -o ${OUTPUT}' % self.gaeaHC.bed_list]
 
         #write script
         scriptPath = \
         impl.write_scripts(
-                name = 'haplotypeCaller',
+                name = 'gaeaHC',
                 commands=cmd,
                 JobParamList=JobParamList,
                 paramDict=ParamDict)
