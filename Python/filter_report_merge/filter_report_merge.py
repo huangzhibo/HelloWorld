@@ -8,7 +8,7 @@ from argparse import RawDescriptionHelpFormatter, ArgumentParser
 
 __version__ = '1.0.0'
 __date__ = '2017-06-28'
-__updated__ = '2018-03-28'
+__updated__ = '2018-05-22'
 
 
 def add(x, y): return x + y
@@ -354,87 +354,87 @@ class LaneReport(object):
 
     def print_filter_stat(self, report_prefix):
         if self.read2_info is not None:
-            lines = ["{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines = ["{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Item', 'Total', 'Percentage', 'Counts(fq1)', 'Percentage', 'Counts(fq1)', 'Percentage')]
             filter_num = self.total_raw_read_num - self.total_clean_read_num
             fq1_filter_num = (self.total_raw_read_num - self.total_clean_read_num) / 2
             if filter_num == 0:
                 filter_num = 1
                 fq1_filter_num = 1
-                lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                     'Total filtered reads', 0, '{:.2%}'.format(0), 0, '{:.2%}'.format(0), 0, '{:.2%}'.format(0)))
             else:
-                lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+                lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                     'Total filtered reads', filter_num, '{:.2%}'.format(1), fq1_filter_num,
                     '{:.2%}'.format(1), fq1_filter_num, '{:.2%}'.format(1), ))
             p0 = '{:.2%}'.format(self.total_adapter_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.adapter_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.adapter_num * 1.0 / fq1_filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Reads with adapter', self.total_adapter_num, p0, self.read1_info.adapter_num, p1,
                 self.read2_info.adapter_num, p2))
             p0 = '{:.2%}'.format(self.total_low_qual_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.low_qual_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.low_qual_num * 1.0 / fq1_filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Reads with low quality', self.total_low_qual_num, p0, self.read1_info.low_qual_num, p1,
                 self.read2_info.low_qual_num, p2))
             p0 = '{:.2%}'.format(self.total_low_mean_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.low_mean_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.low_mean_num * 1.0 / fq1_filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Reads with low mean quality', self.total_low_mean_num, p0, self.read1_info.low_mean_num, p1,
                 self.read2_info.low_mean_num, p2))
-            # lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            # lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
             #     'Reads with duplications', 0, 0, 0, 0, 0, 0))
             p0 = '{:.2%}'.format(self.total_n_exceed_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.n_exceed_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.n_exceed_num * 1.0 / fq1_filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Read with n rate exceed', self.total_n_exceed_num, p0, self.read1_info.n_exceed_num, p1,
                 self.read2_info.n_exceed_num, p2))
             p0 = '{:.2%}'.format(self.total_small_insert_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.small_insert_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.small_insert_num * 1.0 / fq1_filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Read with small insert size', self.total_small_insert_num, p0, self.read1_info.small_insert_num, p1,
                 self.read2_info.small_insert_num, p2))
             p0 = '{:.2%}'.format(self.total_polyA_num * 1.0 / filter_num)
             p1 = '{:.2%}'.format(self.read1_info.polyA_num * 1.0 / fq1_filter_num)
             p2 = '{:.2%}'.format(self.read2_info.polyA_num * 1.0 / fq1_filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
                 'Reads with PolyA', self.total_polyA_num, p0, self.read1_info.polyA_num, p1,
                 self.read2_info.polyA_num, p2))
         else:
-            lines = ["{:<65}\t{:<20}\t{:<20}".format(
+            lines = ["{:<40}\t{:<15}\t{:<15}".format(
                 'Item', 'Counts(fq1)', 'Percentage')]
             filter_num = self.total_raw_read_num - self.total_clean_read_num
             if filter_num == 0:
                 filter_num = 1
-                lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                lines.append("{:<40}\t{:<15}\t{:<15}".format(
                     'Total filtered reads', 0, '{:.2%}'.format(0)))
             else:
-                lines.append("{:<65}\t{:<20}\t{:<20}".format(
+                lines.append("{:<40}\t{:<15}\t{:<15}".format(
                     'Total filtered reads', filter_num, '{:.2%}'.format(1)))
             p0 = '{:.2%}'.format(self.total_adapter_num * 1.0 / filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}".format(
                 'Reads with adapter', self.total_adapter_num, p0))
             p0 = '{:.2%}'.format(self.total_low_qual_num * 1.0 / filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}".format(
                 'Reads with low quality', self.total_low_qual_num, p0))
             p0 = '{:.2%}'.format(self.total_low_mean_num * 1.0 / filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}".format(
                 'Reads with low mean quality', self.total_low_mean_num, p0))
-            # lines.append("{:<65}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}\t{:<20}".format(
+            # lines.append("{:<40}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}\t{:<15}".format(
             #     'Reads with duplications', 0, 0, 0, 0, 0, 0))
             p0 = '{:.2%}'.format(self.total_n_exceed_num * 1.0 / filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}".format(
                 'Read with n rate exceed', self.total_n_exceed_num, p0))
             p0 = '{:.2%}'.format(self.total_small_insert_num * 1.0 / filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}".format(
+            lines.append("{:<40}\t{:<15}\t{:<15}".format(
                 'Read with small insert size', self.total_small_insert_num, p0))
             p0 = '{:.2%}'.format(self.total_polyA_num * 1.0 / filter_num)
-            lines.append("{:<65}\t{:<20}\t{:<20}".format('Reads with PolyA', self.total_polyA_num, p0))
+            lines.append("{:<40}\t{:<15}\t{:<15}".format('Reads with PolyA', self.total_polyA_num, p0))
 
         write_report(report_prefix + '.txt', lines)
 

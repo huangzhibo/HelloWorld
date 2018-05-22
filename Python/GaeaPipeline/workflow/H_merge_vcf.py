@@ -50,29 +50,31 @@ class merge_vcf(Workflow):
             JobParamList.append({
                     "SAMPLE" : sampleName,
                     "SCRDIR" : scriptsdir,
-                    "INPUT" : inputInfo[sampleName],
-                    "VCFDIR" : os.path.join(inputInfo[sampleName], 'pure_part_vcf_dir'),
-                    "GVCFDIR" : os.path.join(inputInfo[sampleName], 'pure_part_gvcf_dir'),
+                    "VCF_TMP" : inputInfo[sampleName]['vcf'],
+                    "GVCF_TMP" : inputInfo[sampleName]['gvcf'],
                     "VCF": result.output[sampleName],
                     "GVCF": gvcf
                 })
    
         cmd = ["source %s/bin/activate" % self.GAEA_HOME,
-               'check_hc_part.py -b %s -p ${INPUT} -o ${VCFDIR}' % self.merge_vcf.bed_list,
+               'check_hc_part.py -b %s -p ${VCF_TMP} -i' % self.merge_vcf.bed_list,
                'if [ $? != 0 ]\nthen',
                '\texit 1',
                'fi',
-               '${PROGRAM} ${HADOOPPARAM} -input file://${VCFDIR} -output file://${VCF} &\n',
-               'check_hc_part.py -b %s -p ${INPUT} -o ${GVCFDIR} -s .g.vcf.gz' % self.merge_vcf.bed_list,
+               'rm ${VCF_TMP}/*tbi',
+               '${PROGRAM} ${HADOOPPARAM} -input file://${VCF_TMP} -output file://${VCF} &\n',
+               'check_hc_part.py -b %s -p ${GVCF_TMP} -i -s .g.vcf.gz' % self.merge_vcf.bed_list,
                'if [ $? != 0 ]\nthen',
                '\texit 1',
                'fi',
-               '${PROGRAM} ${HADOOPPARAM} -input file://${GVCFDIR} -output file://${GVCF}',
+               'rm ${GVCF_TMP}/*tbi',
+               '${PROGRAM} ${HADOOPPARAM} -input file://${GVCF_TMP} -output file://${GVCF}',
                'wait\n'
                ]
         if self.merge_vcf.bcftools:
-            cmd.append("%s index %s ${VCF}" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
+            cmd.append("%s index %s ${VCF} &" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
             cmd.append("%s index %s ${GVCF}" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
+            cmd.append("wait")
 
         #write script
         scriptPath = \

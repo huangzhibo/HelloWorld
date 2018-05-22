@@ -55,10 +55,10 @@ class gaeaHC(Workflow):
                   "\t\techo $LINE",
                   "\t\tbed=`echo $LINE| awk '{print $2}'`",
                   "\t\tbase=`basename $bed .bed`",
-                  '\t\tjava -Xmx%sm -jar %s -T gaeaHC %s -I ${BAM} -L $bed -R %s -o ${VCF_TMP}/$base.g.vcf.gz' %
+                  '\t\tjava -Xmx%sm -jar %s -T gaeaHC %s -I ${BAM} -L $bed -R %s -o ${GVCF_TMP}/$base.g.vcf.gz' %
                   (self.gaeaHC.mapper_mem, self.gaeaHC.program, self.gaeaHC.parameter, self.ref.normal.ref),
                   "\t\tsleep 3",
-                  '\t\tjava -Xmx%sm -jar %s -T GenotypeGVCFs --variant ${VCF_TMP}/$base.g.vcf.gz -R %s -o ${VCF_TMP}/$base.hc.vcf.gz %s' %
+                  '\t\tjava -Xmx%sm -jar %s -T GenotypeGVCFs --variant ${GVCF_TMP}/$base.g.vcf.gz -R %s -o ${VCF_TMP}/$base.hc.vcf.gz %s' %
                   (self.gaeaHC.mapper_mem, self.gaeaHC.program, self.ref.normal.ref, self.gaeaHC.GenotypeGVCFs_param),
                   "\telse",
                   '\t\techo "Empty LANE"',
@@ -69,12 +69,15 @@ class gaeaHC(Workflow):
         JobParamList = []
         for sampleName in inputInfo:
             hdfs_tmp = os.path.join(self.option.dirHDFS, sampleName, 'hc_tmp')
-            tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'hc')
-            os.chmod(tmp, 0777)
+            vcf_tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'hc_vcf')
+            gvcf_tmp = impl.mkdir(self.option.workdir, "temp", sampleName, 'hc_gvcf')
+            # os.chmod(vcf_tmp, 0777)
             scriptsdir = impl.mkdir(self.gaeaScriptsDir, sampleName)
-            result.output[sampleName] = tmp
+            result.output[sampleName] = {}
+            result.output[sampleName]['vcf'] = vcf_tmp
+            result.output[sampleName]['gvcf'] = gvcf_tmp
 
-            MapperParamDict.update({"BAM":inputInfo[sampleName], "VCF_TMP":tmp})
+            MapperParamDict.update({"BAM":inputInfo[sampleName], "VCF_TMP":vcf_tmp, "GVCF_TMP":gvcf_tmp})
             impl.write_file(
                 fileName='hc_mapper.sh',
                 scriptsdir=scriptsdir,
@@ -86,8 +89,8 @@ class gaeaHC(Workflow):
                     "SAMPLE" : sampleName,
                     "SCRDIR" : scriptsdir,
                     "MAPPER": os.path.join(scriptsdir, "hc_mapper.sh"),
-                    "OUTPUT": result.output[sampleName],
-                    "VCF_TMP": tmp,
+                    "VCF_TMP": vcf_tmp,
+                    "GVCF_TMP": gvcf_tmp,
                     "OUTTEMP": hdfs_tmp
                 })
    
