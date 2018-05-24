@@ -142,7 +142,13 @@ class impl(object):
         elif paramStr.find(paramElem) != -1:
                 return paramStr.replace(paramElem, '')
         return paramStr
-            
+
+    def hasParam(self, paramStr, paramElem):
+        if paramStr.find(paramElem) != -1:
+            return True
+        return False
+
+
     def fileAppend(self,fh,commands,JobParamList={}):
         t = _generate_template(commands)
         for param in JobParamList:

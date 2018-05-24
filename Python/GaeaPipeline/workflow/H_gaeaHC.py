@@ -55,7 +55,7 @@ class gaeaHC(Workflow):
                   "\t\techo $LINE",
                   "\t\tbed=`echo $LINE| awk '{print $2}'`",
                   "\t\tbase=`basename $bed .bed`",
-                  '\t\tjava -Xmx%sm -jar %s -T gaeaHC %s -I ${BAM} -L $bed -R %s -o ${GVCF_TMP}/$base.g.vcf.gz' %
+                  '\t\tjava -Xmx%sm -jar %s -T HaplotypeCaller %s -I ${BAM} -L $bed -R %s -o ${GVCF_TMP}/$base.g.vcf.gz' %
                   (self.gaeaHC.mapper_mem, self.gaeaHC.program, self.gaeaHC.parameter, self.ref.normal.ref),
                   "\t\tsleep 3",
                   '\t\tjava -Xmx%sm -jar %s -T GenotypeGVCFs --variant ${GVCF_TMP}/$base.g.vcf.gz -R %s -o ${VCF_TMP}/$base.hc.vcf.gz %s' %
