@@ -4,6 +4,8 @@ import os
 from gaeautils.bundle import bundle
 from gaeautils.workflow import Workflow
 
+__updated__ = '2018-05-24'
+
 
 class merge_vcf(Workflow):
     """ merge_vcf """
@@ -49,17 +51,17 @@ class merge_vcf(Workflow):
             gvcf = os.path.join(outputPath, "{}.g.vcf.gz".format(sampleName))
             upload_tmp = os.path.join(self.option.dirHDFS, sampleName, 'vcf_tmp')
 
-            #global param
+            # global param
             JobParamList.append({
-                    "SAMPLE" : sampleName,
-                    "SCRDIR" : scriptsdir,
-                    "UPLOAD_TMP" : upload_tmp,
-                    "DATALIST" : os.path.join(scriptsdir, 'vcf_data.list'),
-                    "VCF_TMP" : inputInfo[sampleName]['vcf'],
-                    "GVCF_TMP" : inputInfo[sampleName]['gvcf'],
-                    "VCF": result.output[sampleName],
-                    "GVCF": gvcf
-                })
+                "SAMPLE": sampleName,
+                "SCRDIR": scriptsdir,
+                "UPLOAD_TMP": upload_tmp,
+                "DATALIST": os.path.join(scriptsdir, 'vcf_data.list'),
+                "VCF_TMP": inputInfo[sampleName]['vcf'],
+                "GVCF_TMP": inputInfo[sampleName]['gvcf'],
+                "VCF": result.output[sampleName],
+                "GVCF": gvcf
+            })
 
             if self.merge_vcf.uploadvcf:
                 vcf_suffix = ".hc.vcf.gz"
@@ -97,24 +99,25 @@ class merge_vcf(Workflow):
                 'if [ $? != 0 ]\nthen',
                 '\texit 1',
                 'fi',
-                '${PROGRAM} SortVcf ${HADOOPPARAM} -R 400 -p /tmp/partitionFiles/vcfsort/reducer400_partitons.lst -input ${UPLOAD_TMP} -output file://${VCF}\n',
-                'wait\n'
+                'wait',
+                '${PROGRAM} SortVcf ${HADOOPPARAM} -R 400 -p /tmp/partitionFiles/vcfsort/reducer400_partitons.lst '
+                '-input ${UPLOAD_TMP} -output file://${VCF}\n',
             ])
         else:
             cmd.extend([
-               'rm ${VCF_TMP}/*tbi',
-               '${PROGRAM} SortVcf ${HADOOPPARAM} -input file://${VCF_TMP} -output file://${VCF}\n',
-               'wait\n'
+                'rm ${VCF_TMP}/*tbi',
+                'wait',
+                '${PROGRAM} SortVcf ${HADOOPPARAM} -input file://${VCF_TMP} -output file://${VCF}\n'
             ])
         if self.merge_vcf.bcftools:
             cmd.append("%s index %s ${VCF} &" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
             cmd.append("%s index %s ${GVCF}" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
             cmd.append("wait")
 
-        #write script
+        # write script
         scriptPath = \
-        impl.write_scripts(
-                name = 'merge_vcf',
+            impl.write_scripts(
+                name='merge_vcf',
                 commands=cmd,
                 JobParamList=JobParamList,
                 paramDict=ParamDict)
