@@ -64,7 +64,7 @@ class alignment(Workflow):
             self.alignment.bwaReducerNum = 1
 
         hadoop_param = '-D mapreduce.job.maps=%s ' % str(self.hadoop.mapper_num)
-        hadoop_param += '-D mapreduce.job.reducers=%s ' % str(self.alignment.bwaReducerNum)
+        hadoop_param += '-D mapreduce.job.reduces=%s ' % str(self.alignment.bwaReducerNum)
         hadoop_param += '-D mapreduce.reduce.cpu.vcores=5 '
         if self.hadoop.get('queue'):
             hadoop_param += '-D mapreduce.job.queuename={} '.format(self.hadoop.queue)

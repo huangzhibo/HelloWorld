@@ -37,7 +37,7 @@ class gaeaHC(Workflow):
         if self.hadoop.get('queue'):
             hadoop_parameter += ' -D mapreduce.job.queuename={} '.format(self.hadoop.queue)
         hadoop_parameter += ' -D mapreduce.job.maps={} '.format(bed_num)
-        hadoop_parameter += ' -D mmapreduce.job.reducers=0 '
+        hadoop_parameter += ' -D mapreduce.job.reduces=0 '
         hadoop_parameter += ' -D mapreduce.map.memory.mb=%s ' % self.gaeaHC.mapper_mem
         hadoop_parameter += ' -D mapreduce.map.cpu.vcores=6 '
         hadoop_parameter += ' -inputformat org.apache.hadoop.mapred.lib.NLineInputFormat '
