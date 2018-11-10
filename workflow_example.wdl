@@ -1,6 +1,6 @@
 import "https://raw.githubusercontent.com/huangzhibo/Learn/master/hello_world.wdl" as wh
 
-workflow HelloWorld_SGE {
+workflow HelloWorld {
 
         #Array[Array[String]] inputSamples = read_tsv("/Users/huangzhibo/GitHub/wdl/test/slide_lane.tsv")
         Array[Array[String]] inputSamples = [["hello", "world"]] 
