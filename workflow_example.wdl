@@ -4,18 +4,24 @@ workflow HelloWorld {
 
         #Array[Array[String]] inputSamples = read_tsv("/Users/huangzhibo/GitHub/wdl/test/slide_lane.tsv")
         Array[Array[String]] inputSamples = [["hello", "world"]] 
-	call WriteGreeting {
+
+        call wh.WriteHello
+	
+	call WriteWorld {
 	    input:slide=inputSamples[0]
 	}
-        call wh.WriteHello
+	
+	output {
+		File helloFile = wh.WriteHello.outfile
+		File testFile = WriteWorld.test
+	}
 }
 
-task WriteGreeting {
+task WriteWorld {
         Array[String] slide
 
 	command {
-                echo ${slide[0]}
-		echo "Hello World"
+                echo ${slide[1]}
                 echo "test123" >test
 	}
 
