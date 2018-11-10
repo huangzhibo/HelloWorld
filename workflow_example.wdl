@@ -12,7 +12,7 @@ workflow HelloWorld {
 	}
 	
 	output {
-		File helloFile = wh.WriteHello.outfile
+		File helloFile = WriteHello.outfile
 		File testFile = WriteWorld.test
 	}
 }
