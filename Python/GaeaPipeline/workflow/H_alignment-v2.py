@@ -98,6 +98,14 @@ class alignment(Workflow):
                 self.alignment.parameter = impl.paramRectify(self.alignment.parameter, '-i', True)
             else:
                 self.alignment.parameter = impl.paramRectify(self.alignment.parameter, '-i', False)
+        elif self.alignment.bwaSubTool.rfind('filter') != -1:
+            subfunc = 'filter'
+            if self.init.isSE:
+                subfunc += ' --is_se '
+            if int(self.init.qualitySystem) == 1:
+                self.alignment.parameter = impl.paramRectify(self.alignment.parameter, '-i', True)
+            else:
+                self.alignment.parameter = impl.paramRectify(self.alignment.parameter, '-i', False)
         else:
             samplelistparam = '-T'
             subfunc = 'alnpe'

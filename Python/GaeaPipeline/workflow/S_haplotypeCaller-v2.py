@@ -49,7 +49,7 @@ class haplotypeCaller(Workflow):
             cmd.append('%s index ${INPUT}' % self.haplotypeCaller.index_program)
             cmd.append('fi')
         # cmd.append("${PROGRAM} -T HaplotypeCaller -I ${INPUT} -o ${GVCF} -R ${REF} %s" % self.haplotypeCaller.parameter)
-        cmd.append("java -jar ${PROGRAM} -T HaplotypeCaller -I ${INPUT} -o ${GVCF} -R ${REF} %s\n" % self.haplotypeCaller.parameter)
+        cmd.append("java -jar ${PROGRAM} -T HaplotypeCaller --sample_name ${SAMPLE} -I ${INPUT} -o ${GVCF} -R ${REF} %s\n" % self.haplotypeCaller.parameter)
         # cmd.append("${PROGRAM} -T HaplotypeCaller --sample_name ${SAMPLE} -I ${INPUT} -o ${GVCF} -R ${REF} %s" % self.haplotypeCaller.parameter)
         cmd.append("java ${JAVATMP} -jar ${PROGRAM} -T GenotypeGVCFs -R ${REF} --variant ${GVCF} -o ${VCF} %s" % self.haplotypeCaller.parameter_g)
 

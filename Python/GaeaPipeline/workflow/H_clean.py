@@ -58,4 +58,3 @@ class clean(Workflow):
         #result
         result.script.update(scriptPath)           
         return result
-                                

@@ -4,7 +4,7 @@ import os
 from gaeautils.bundle import bundle
 from gaeautils.workflow import Workflow
 
-__updated__ = '2018-05-31'
+__updated__ = '2018-05-24'
 
 
 class merge_vcf(Workflow):
@@ -16,7 +16,7 @@ class merge_vcf(Workflow):
     INIT.merge_vcf.bcftools_param = "-t"
     INIT.merge_vcf.parameter = ""
     INIT.merge_vcf.uploadvcf = False
-    INIT.merge_vcf.check_param = ""
+    INIT.merge_vcf.parameter_check = ""
     INIT.merge_vcf.bed_list = ""
 
     def run(self, impl, dependList):
@@ -47,6 +47,7 @@ class merge_vcf(Workflow):
             scriptsdir = impl.mkdir(self.gaeaScriptsDir, sampleName)
             outputPath = impl.mkdir(self.option.workdir, "variation", sampleName)
             result.output[sampleName] = os.path.join(outputPath, "{}.hc.vcf.gz".format(sampleName))
+            gvcf = os.path.join(outputPath, "{}.g.vcf.gz".format(sampleName))
             upload_tmp = os.path.join(self.option.dirHDFS, sampleName, 'vcf_tmp')
 
             # global param
@@ -56,16 +57,19 @@ class merge_vcf(Workflow):
                 "UPLOAD_TMP": upload_tmp,
                 "DATALIST": os.path.join(scriptsdir, 'vcf_data.list'),
                 "VCF_TMP": inputInfo[sampleName]['vcf'],
-                "VCF": result.output[sampleName]
+                "GVCF_TMP": inputInfo[sampleName]['gvcf'],
+                "VCF": result.output[sampleName],
+                "GVCF": gvcf
             })
             if self.merge_vcf.uploadvcf:
                 vcf_suffix = ".hc.vcf.gz"
                 dataParam = []
                 with open(self.merge_vcf.bed_list, 'r') as beds:
                     for bed in beds:
-                        basename = '{}{}'.format(os.path.splitext(os.path.basename(bed))[0], vcf_suffix)
+                        vcf_basebane = '{}{}'.format(os.path.splitext(os.path.basename(bed))[0], vcf_suffix)
                         dataParam.append({
-                            "KEY": os.path.join(inputInfo[sampleName]['vcf'], basename)
+                            "KEY": os.path.join(inputInfo[sampleName]['vcf'], vcf_basebane),
+                            "VALUE": upload_tmp
                         })
 
                 impl.write_file(
@@ -75,10 +79,16 @@ class merge_vcf(Workflow):
                     JobParamList=dataParam)
 
         cmd = ["source %s/bin/activate" % self.GAEA_HOME,
-               'check_hc_part.py -b %s -p ${VCF_TMP} %s' % (self.merge_vcf.bed_list, self.merge_vcf.check_param),
+               'check_hc_part.py -b %s -p ${VCF_TMP} -i' % self.merge_vcf.bed_list,
                'if [ $? != 0 ]\nthen',
                '\texit 1',
-               'fi'
+               'fi',
+               'check_hc_part.py -b %s -p ${GVCF_TMP} -i -s .g.vcf.gz' % self.merge_vcf.bed_list,
+               'if [ $? != 0 ]\nthen',
+               '\texit 1',
+               'fi',
+               'rm ${GVCF_TMP}/*tbi',
+               '${PROGRAM} SortVcf ${HADOOPPARAM} -input file://${GVCF_TMP} -output file://${GVCF} &\n'
                ]
 
         if self.merge_vcf.uploadvcf:
@@ -99,7 +109,9 @@ class merge_vcf(Workflow):
                 '${PROGRAM} SortVcf ${HADOOPPARAM} -input file://${VCF_TMP} -output file://${VCF}\n'
             ])
         if self.merge_vcf.bcftools:
-            cmd.append("%s index %s ${VCF}" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
+            cmd.append("%s index %s ${VCF} &" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
+            cmd.append("%s index %s ${GVCF}" % (self.merge_vcf.bcftools, self.merge_vcf.bcftools_param))
+            cmd.append("wait")
 
         # write script
         scriptPath = \
